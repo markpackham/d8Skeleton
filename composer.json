@@ -70,7 +70,9 @@
         "drupal/views_slideshow": "^4.6",
         "drupal/viewsreference": "^1.4",
         "drupal/webform": "^5.2",
-        "drupal/weight": "^3.1"
+        "drupal/weight": "^3.1",
+        "drupal/adminimal_theme": "^1.4",
+        "drupal/bootstrap": "^3.17"
     },
     "replace": {
         "drupal/core": "^8.7"
