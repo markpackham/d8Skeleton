@@ -74,7 +74,8 @@
         "drupal/bootstrap": "^3.17",
         "drupal/google_tag": "^1.1",
         "drupal/node_revision_delete": "^1.0@alpha",
-        "drupal/migrate_tools": "^4.1"
+        "drupal/migrate_tools": "^4.1",
+        "drupal/migrate_plus": "^4.2"
     },
     "replace": {
         "drupal/core": "^8.7"
