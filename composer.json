@@ -73,7 +73,8 @@
         "drupal/adminimal_theme": "^1.4",
         "drupal/bootstrap": "^3.17",
         "drupal/google_tag": "^1.1",
-        "drupal/node_revision_delete": "^1.0@alpha"
+        "drupal/node_revision_delete": "^1.0@alpha",
+        "drupal/migrate_tools": "^4.1"
     },
     "replace": {
         "drupal/core": "^8.7"
