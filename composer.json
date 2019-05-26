@@ -23,7 +23,6 @@
         "drupal/ctools": "^3.2",
         "drupal/devel": "^2.1",
         "drupal/diff": "^1.0@RC",
-        "drupal/ds": "^3.3",
         "drupal/easy_breadcrumb": "^1.8",
         "drupal/editor_advanced_link": "^1.4",
         "drupal/editor_file": "^1.4",
