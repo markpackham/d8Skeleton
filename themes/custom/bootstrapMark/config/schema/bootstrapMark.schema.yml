@@ -1,5 +1,0 @@
-# Schema for the theme setting configuration file of the bootstrapMark theme.
-
-bootstrapMark.settings:
-  type: theme_settings
-  label: 'bootstrapMark settings'

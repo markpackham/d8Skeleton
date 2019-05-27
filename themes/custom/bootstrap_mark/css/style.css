@@ -1,0 +1,25 @@
+h1 {
+  font-size: 27px;
+}
+
+h3 {
+  font-size: 20px;
+}
+
+#footer-menu-link-content93540bb0-dc52-42df-b11a-ccf6f63370ff > a {
+  padding-left: 0;
+}
+
+.page-header {
+  margin: 10px 0 10px;
+}
+
+/*
+Where all mobile queries come from & override stuff
+*/
+@media (max-width: 700px) {
+  .sf-accordion-toggle {
+    margin-top: 1rem;
+  }
+}
+/*# sourceMappingURL=style.css.map */
