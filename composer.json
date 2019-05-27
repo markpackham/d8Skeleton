@@ -31,7 +31,6 @@
         "drupal/eu_cookie_compliance": "^1.5",
         "drupal/exclude_node_title": "^1.0@beta",
         "drupal/extlink": "^1.1",
-        "drupal/field_group": "^1.0",
         "drupal/field_permissions": "^1.0@RC",
         "drupal/file_mdm": "^1.1",
         "drupal/geofield": "^1.3",
