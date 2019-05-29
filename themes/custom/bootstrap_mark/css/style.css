@@ -6,6 +6,12 @@ button {
   margin-left: 1rem;
 }
 
+.navbar {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  padding: 0;
+}
+
 h1 {
   font-size: 27px;
 }
