@@ -1,13 +1,17 @@
-// Stuff used all over the site like buttons & containers are found here
+// Stuff used all over the site like buttons, the main menu & containers are found here
+
+// Main Menu
+.navbar {
+  padding: 0;
+  margin: 1rem 0;
+}
 
 // Buttons
 button {
   margin-left: 1rem;
 }
 
-// Main Menu
-.navbar {
-  margin-top: 1rem;
-  margin-bottom: 1rem;
-  padding: 0;
+// Add To Any Buttons
+.addtoany_list a {
+  margin: 1rem 0;
 }
