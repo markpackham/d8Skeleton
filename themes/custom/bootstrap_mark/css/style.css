@@ -1,3 +1,8 @@
+#views-exposed-form-blog-page-1 label,
+#views-exposed-form-blog-page-2 label,
+#views-exposed-form-blog-page-3 label,
+#views-exposed-form-testimonials-page-1 label,
+#views-exposed-form-team-page-1 label,
 #views-exposed-form-search-site-page-1 label {
   display: none;
 }
@@ -26,6 +31,10 @@ h2 {
 
 h3 {
   font-size: 20px;
+}
+
+img {
+  padding: 0.5rem;
 }
 
 .page-header {

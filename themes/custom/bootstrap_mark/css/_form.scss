@@ -1,4 +1,11 @@
 // Search Form
-#views-exposed-form-search-site-page-1 label {
-  display: none;
+#views-exposed-form-blog-page-1,
+#views-exposed-form-blog-page-2,
+#views-exposed-form-blog-page-3,
+#views-exposed-form-testimonials-page-1,
+#views-exposed-form-team-page-1,
+#views-exposed-form-search-site-page-1 {
+  label {
+    display: none;
+  }
 }
