@@ -4124,22 +4124,22 @@
     },
     {
         "name": "drupal/password_policy",
-        "version": "3.0.0-alpha4",
-        "version_normalized": "3.0.0.0-alpha4",
+        "version": "3.0.0-alpha5",
+        "version_normalized": "3.0.0.0-alpha5",
         "source": {
             "type": "git",
             "url": "https://git.drupalcode.org/project/password_policy.git",
-            "reference": "8.x-3.0-alpha4"
+            "reference": "8.x-3.0-alpha5"
         },
         "dist": {
             "type": "zip",
-            "url": "https://ftp.drupal.org/files/projects/password_policy-8.x-3.0-alpha4.zip",
-            "reference": "8.x-3.0-alpha4",
-            "shasum": "79997599fbce390e79eda0aba10f403324c48b99"
+            "url": "https://ftp.drupal.org/files/projects/password_policy-8.x-3.0-alpha5.zip",
+            "reference": "8.x-3.0-alpha5",
+            "shasum": "74f170caa739e886d2de0df27a479f94014e273f"
         },
         "require": {
-            "drupal/core": "*",
-            "drupal/ctools": "*"
+            "drupal/core": "^8.5.0",
+            "drupal/ctools": "^3.1"
         },
         "type": "drupal-module",
         "extra": {
@@ -4147,8 +4147,8 @@
                 "dev-3.x": "3.x-dev"
             },
             "drupal": {
-                "version": "8.x-3.0-alpha4",
-                "datestamp": "1506649448",
+                "version": "8.x-3.0-alpha5",
+                "datestamp": "1559915584",
                 "security-coverage": {
                     "status": "not-covered",
                     "message": "Alpha releases are not covered by Drupal security advisories."
