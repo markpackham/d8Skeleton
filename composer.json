@@ -10,7 +10,6 @@
         "drupal/addtoany": "^1.12",
         "drupal/admin_toolbar": "^1.26",
         "drupal/adminimal_admin_toolbar": "^1.9",
-        "drupal/advagg": "^3.5",
         "drupal/back_to_top": "^1.0",
         "drupal/backup_migrate": "^4.0",
         "drupal/better_exposed_filters": "^3.0@alpha",
@@ -73,7 +72,8 @@
         "drupal/google_tag": "^1.1",
         "drupal/node_revision_delete": "^1.0@alpha",
         "drupal/migrate_tools": "^4.1",
-        "drupal/migrate_plus": "^4.2"
+        "drupal/migrate_plus": "^4.2",
+        "drupal/advagg": "^4.0"
     },
     "replace": {
         "drupal/core": "^8.7"
