@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Do this to run the php code snifer to check standards in custom code
+./vendor/bin/phpcs 
+-->
+<ruleset name="phpcs-standard">
+  <description>Codestyle ruleset for Drupal</description>
+
+  <!-- Specify standards. -->
+  <rule ref="Drupal"/>
+  <rule ref="DrupalPractice"/>
+
+  <!-- Include path with the Drupal and DrupalPractice rules. -->
+  <config name="installed_paths" value="vendor/drupal/coder/coder_sniffer"/>
+
+  <!-- Set ignore extensions. -->
+  <!-- @todo remove .css to check also the css files. -->
+  <!-- @see https://www.drupal.org/node/2867601#comment-12075633 -->
+  <arg name="ignore" value="*.css,*.md,*.txt"/>
+
+  <!-- Specify folders. -->
+  <file>modules/custom</file>
+  <file>themes/custom</file>
+</ruleset>
