@@ -347,7 +347,7 @@
 
   Drupal.eu_cookie_compliance.loadCategoryScripts = function(categories) {
     for (var cat in categories) {
-      if (euCookieComplianceHasLoadedScriptsForCategory[cat] !== true && typeof euCookieComplianceLoadScripts === "function" && typeof euCookieComplianceHasLoadedScriptsForCategory === "function") {
+      if (euCookieComplianceHasLoadedScriptsForCategory[cat] !== true && typeof euCookieComplianceLoadScripts === "function") {
         euCookieComplianceLoadScripts(categories[cat]);
         euCookieComplianceHasLoadedScriptsForCategory[cat] = true;
       }

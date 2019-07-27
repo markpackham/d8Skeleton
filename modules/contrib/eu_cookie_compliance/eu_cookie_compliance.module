@@ -653,29 +653,55 @@ function _eu_cookie_compliance_find_privacy_policy() {
     return FALSE;
   }
 
-  $pattern = 'privacy|privacy +policy|cookie +policy|terms +of +use|terms +of +service|terms +and +conditions';
-
   $connection = Database::getConnection();
-  // Select operator based on the database type.
-  switch ($connection->databaseType()) {
-    case 'pgsql':
-      $op = '~*';
-      break;
+  $database_type = $connection->databaseType();
 
-    case 'sqlite':
-      $op = 'REGEXP';
-      break;
+  if ($database_type === 'sqlsrv') {
+    $query = \Drupal::database()->query(
+      "select nid from {node_field_data} where 
+      title LIKE 'Privacy%' OR 
+      title LIKE 'Privacy policy%' OR 
+      title LIKE 'Privacy Policy%' OR 
+      title LIKE 'Cookie policy%' OR 
+      title LIKE 'Cookie Policy%' OR 
+      title LIKE 'Terms of use%' OR 
+      title LIKE 'Terms of Use%' OR 
+      title LIKE 'Terms of service%' OR 
+      title LIKE 'Terms of Service%' OR 
+      title LIKE 'Terms and conditions%' OR 
+      title LIKE 'Terms and Conditions%'
+      "
+    );
+    $result = $query->fetchAll();
 
-    default:
-      $op = 'RLIKE';
+    if (!empty($result)) {
+      return ('/node/' . $result[0]->nid);
+    }
   }
+  else {
+    // Select operator based on the database type.
+    switch ($connection->databaseType()) {
+      case 'pgsql':
+        $op = '~*';
+        break;
 
-  $query = \Drupal::entityQuery('node')
-    ->condition('title', $pattern, $op);
+      case 'sqlite':
+        $op = 'REGEXP';
+        break;
 
-  $result = $query->execute();
-  if (!empty($result)) {
-    return ('/node/' . array_shift($result));
+      default:
+        $op = 'RLIKE';
+    }
+
+    $pattern = 'privacy|privacy +policy|cookie +policy|terms +of +use|terms +of +service|terms +and +conditions';
+
+    $query = \Drupal::entityQuery('node')
+      ->condition('title', $pattern, $op);
+    $result = $query->execute();
+
+    if (!empty($result)) {
+      return ('/node/' . array_shift($result));
+    }
   }
   return FALSE;
 }
