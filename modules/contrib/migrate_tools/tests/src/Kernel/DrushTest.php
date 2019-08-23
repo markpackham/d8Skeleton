@@ -23,6 +23,7 @@ class DrushTest extends MigrateTestBase {
     'taxonomy',
     'text',
     'system',
+    'user',
   ];
 
   /**
@@ -60,7 +61,7 @@ class DrushTest extends MigrateTestBase {
   /**
    * The logger.
    *
-   * @var \Drupal\Core\Logger\LoggerChannelInterface
+   * @var \Psr\Log\LoggerInterface
    */
   protected $logger;
 
@@ -100,6 +101,15 @@ class DrushTest extends MigrateTestBase {
   }
 
   /**
+   * Tests that a failing status throws an exception (i.e. exit code).
+   */
+  public function testFailingStatusThrowsException() {
+    $this->expectException(\Exception::class);
+    $this->expectExceptionMessage('The "does_not_exist" plugin does not exist.');
+    $this->commands->status('invalid_plugin');
+  }
+
+  /**
    * Tests drush mim.
    *
    * @throws \Drupal\Component\Plugin\Exception\PluginException
@@ -114,6 +124,15 @@ class DrushTest extends MigrateTestBase {
     $this->assertSame(3, $id_map->importedCount());
     $this->commands->import('fruit_terms', ['idlist' => 'Apple', 'update' => TRUE] + $this->importBaseOptions);
     $this->assertSame(0, count($id_map->getRowsNeedingUpdate(100)));
+  }
+
+  /**
+   * Tests that a failing import throws an exception (i.e. exit code).
+   */
+  public function testFailingImportThrowsException() {
+    $this->expectException(\Exception::class);
+    $this->expectExceptionMessage('source_exception migration failed.');
+    $this->commands->import('source_exception');
   }
 
   /**
@@ -135,6 +154,15 @@ class DrushTest extends MigrateTestBase {
   }
 
   /**
+   * Tests that a failing messages throws an exception (i.e. exit code).
+   */
+  public function testFailingMessagesThrowsException() {
+    $this->expectException(\Exception::class);
+    $this->expectExceptionMessage('Migration does_not_exist does not exist');
+    $this->commands->messages('does_not_exist');
+  }
+
+  /**
    * Tests drush mr.
    */
   public function testRollback() {
@@ -145,6 +173,18 @@ class DrushTest extends MigrateTestBase {
     $this->assertSame(3, $id_map->importedCount());
     $this->commands->rollback('fruit_terms');
     $this->assertSame(0, $id_map->importedCount());
+  }
+
+  /**
+   * Tests that a failing rollback throws an exception (i.e. exit code).
+   */
+  public function testFailingRollbackThrowsException() {
+    $this->expectException(\Exception::class);
+    $this->expectExceptionMessage('source_exception migration failed');
+    /** @var \Drupal\migrate\Plugin\MigrationInterface $migration */
+    $migration = $this->migrationPluginManager->createInstance('source_exception');
+    $migration->setStatus(MigrationInterface::STATUS_IMPORTING);
+    $this->commands->rollback('source_exception');
   }
 
   /**
@@ -163,6 +203,15 @@ class DrushTest extends MigrateTestBase {
   }
 
   /**
+   * Tests that a failing reset status throws an exception (i.e. exit code).
+   */
+  public function testFailingResetStatusThrowsException() {
+    $this->expectException(\Exception::class);
+    $this->expectExceptionMessage('Migration does_not_exist does not exist');
+    $this->commands->resetStatus('does_not_exist');
+  }
+
+  /**
    * Tests drush mst.
    *
    * @throws \Drupal\Component\Plugin\Exception\PluginException
@@ -176,6 +225,15 @@ class DrushTest extends MigrateTestBase {
   }
 
   /**
+   * Tests that a failing stop throws an exception (i.e. exit code).
+   */
+  public function testFailingStopThrowsException() {
+    $this->expectException(\Exception::class);
+    $this->expectExceptionMessage('Migration does_not_exist does not exist');
+    $this->commands->stop('does_not_exist');
+  }
+
+  /**
    * Tests drush mfs.
    */
   public function testFieldsSource() {
@@ -185,6 +243,15 @@ class DrushTest extends MigrateTestBase {
     $this->assertSame(1, count($rows));
     $this->assertSame('name', $rows[0]['machine_name']);
     $this->assertSame('name', $rows[0]['description']);
+  }
+
+  /**
+   * Tests that a failing fields source throws an exception (i.e. exit code).
+   */
+  public function testFailingFieldsSourceThrowsException() {
+    $this->expectException(\Exception::class);
+    $this->expectExceptionMessage('Migration does_not_exist does not exist');
+    $this->commands->fieldsSource('does_not_exist');
   }
 
 }
@@ -200,7 +267,7 @@ namespace Drupal\migrate_tools\Commands;
 function drush_op(callable $callable) {
   $args = func_get_args();
   array_shift($args);
-  call_user_func_array($callable, $args);
+  return call_user_func_array($callable, $args);
 }
 
 /**
@@ -208,10 +275,15 @@ function drush_op(callable $callable) {
  *
  * @param string $text
  *   The text.
+ * @param array $args
+ *   An associative array of replacement items.
  *
  * @return string
  *   The text.
  */
-function dt($text) {
+function dt($text, array $args = []) {
+  foreach ($args as $before => $after) {
+    $text = str_replace($before, $after, $text);
+  }
   return $text;
 }

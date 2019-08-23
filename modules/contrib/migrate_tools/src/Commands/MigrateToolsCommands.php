@@ -132,6 +132,7 @@ class MigrateToolsCommands extends DrushCommands {
     $migrations = $this->migrationsList($migration_names, $options);
 
     $table = [];
+    $errors = [];
     // Take it one group at a time, listing the migrations within each group.
     foreach ($migrations as $group_id => $migration_list) {
       /** @var \Drupal\migrate_plus\Entity\MigrationGroup $group */
@@ -152,12 +153,12 @@ class MigrateToolsCommands extends DrushCommands {
             $source_plugin = $migration->getSourcePlugin();
           }
           catch (\Exception $e) {
-            $this->logger()->error(
-              dt(
-                'Failure retrieving information on @migration: @message',
-                ['@migration' => $migration_id, '@message' => $e->getMessage()]
-              )
+            $error = dt(
+              'Failure retrieving information on @migration: @message',
+              ['@migration' => $migration_id, '@message' => $e->getMessage()]
             );
+            $this->logger()->error($error);
+            $errors[] = $error;
             continue;
           }
 
@@ -218,6 +219,11 @@ class MigrateToolsCommands extends DrushCommands {
       if ($group_id !== key($migrations)) {
         $table[] = [];
       }
+    }
+
+    // If any errors occurred, throw an exception.
+    if (!empty($errors)) {
+      throw new \Exception(implode(PHP_EOL, $errors));
     }
 
     return new RowsOfFields($table);
@@ -392,6 +398,7 @@ class MigrateToolsCommands extends DrushCommands {
 
     // Take it one group at a time,
     // rolling back the migrations within each group.
+    $has_failure = FALSE;
     foreach ($migrations as $group_id => $migration_list) {
       // Roll back in reverse order.
       $migration_list = array_reverse($migration_list);
@@ -402,8 +409,17 @@ class MigrateToolsCommands extends DrushCommands {
           $additional_options
         );
         // drush_op() provides --simulate support.
-        drush_op([$executable, 'rollback']);
+        $result = drush_op([$executable, 'rollback']);
+        if ($result == MigrationInterface::RESULT_FAILED) {
+          $has_failure = TRUE;
+        }
       }
+    }
+
+    // If any rollbacks failed, throw an exception to generate exit status.
+    if ($has_failure) {
+      // Nudge Drush to use a non-zero exit code.
+      throw new \Exception(dt('!name migration failed.', ['!name' => $migration_id]));
     }
   }
 
@@ -453,9 +469,9 @@ class MigrateToolsCommands extends DrushCommands {
       }
     }
     else {
-      $this->logger()->error(
-        dt('Migration @id does not exist', ['@id' => $migration_id])
-      );
+      $error = dt('Migration @id does not exist', ['@id' => $migration_id]);
+      $this->logger()->error($error);
+      throw new \Exception($error);
     }
   }
 
@@ -490,9 +506,9 @@ class MigrateToolsCommands extends DrushCommands {
       }
     }
     else {
-      $this->logger()->error(
-        dt('Migration @id does not exist', ['@id' => $migration_id])
-      );
+      $error = dt('Migration @id does not exist', ['@id' => $migration_id]);
+      $this->logger()->error($error);
+      throw new \Exception($error);
     }
   }
 
@@ -539,10 +555,9 @@ class MigrateToolsCommands extends DrushCommands {
       $migration_id
     );
     if (!$migration) {
-      $this->logger()->error(
-        dt('Migration @id does not exist', ['@id' => $migration_id])
-      );
-      return NULL;
+      $error = dt('Migration @id does not exist', ['@id' => $migration_id]);
+      $this->logger()->error($error);
+      throw new \Exception($error);
     }
     $id_list = MigrateTools::buildIdList($options);
     $map = new IdMapFilter($migration->getIdMap(), $id_list);
@@ -606,9 +621,9 @@ class MigrateToolsCommands extends DrushCommands {
       return new RowsOfFields($table);
     }
     else {
-      $this->logger()->error(
-        dt('Migration @id does not exist', ['@id' => $migration_id])
-      );
+      $error = dt('Migration @id does not exist', ['@id' => $migration_id]);
+      $this->logger()->error($error);
+      throw new \Exception($error);
     }
   }
 
@@ -763,7 +778,7 @@ class MigrateToolsCommands extends DrushCommands {
     }
     $executable = new MigrateExecutable($migration, $this->getMigrateMessage(), $options);
     // drush_op() provides --simulate support.
-    drush_op([$executable, 'import']);
+    $result = drush_op([$executable, 'import']);
     $executed_migrations += [$migration_id => $migration_id];
     if ($count = $executable->getFailedCount()) {
       // Nudge Drush to use a non-zero exit code.
@@ -773,6 +788,10 @@ class MigrateToolsCommands extends DrushCommands {
           ['!name' => $migration_id, '!count' => $count]
         )
       );
+    }
+    elseif ($result == MigrationInterface::RESULT_FAILED) {
+      // Nudge Drush to use a non-zero exit code.
+      throw new \Exception(dt('!name migration failed.', ['!name' => $migration_id]));
     }
   }
 
