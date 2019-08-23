@@ -6,6 +6,7 @@ CONTENTS OF THIS FILE
  * Recommended modules
  * Installation
  * Configuration
+ * FAQ
  * Maintainers
 
 
@@ -64,32 +65,48 @@ CONFIGURATION
 
  * Drush commands
 
-   - nrd-delete-cron-run
+   - drush nrd-delete-cron-run
 
      Configures how many revisions delete per cron run.
 
-   - nrd-last-execute
+   - drush nrd-last-execute
 
      Get the last time that the node revision delete was made.
 
-   - nrd-set-time
-      
+   - drush nrd-set-time
+
      Configures the frequency with which to delete revisions while cron is
      running.
 
-   - nrd-get-time
-     
+   - drush nrd-get-time
+
      Shows the frequency with which to delete revisions while cron is running.
 
-   - nrd-when-to-delete-time
+   - drush nrd-when-to-delete-time
 
      Configures the time options for the inactivity time that the revision must
      have to be deleted.
 
-   - nrd-minimum-age-to-delete-time
+   - drush nrd-minimum-age-to-delete-time
 
      Configures time options to know the minimum age that the revision must have
      to be deleted.
+
+   - drush nrd-delete-prior-revisions
+
+     Delete all revisions prior to a revision.
+
+
+FAQ
+---
+
+Q: How can I delete the prior revisions?
+
+A: When you are deleting a revision of a node, a new checkbox will appear in a
+   fieldset saying: "Also delete X revisions prior to this one."; if you check
+   it, all the prior revisions will be deleted as well for the given node.
+   If you are deleting the oldest revision, the checkbox will not appear as no
+   prior revisions are available.
 
 
 MAINTAINERS
@@ -97,3 +114,12 @@ MAINTAINERS
 
 Current maintainers:
  * Adrian Cid Almaguer (adriancid) - https://www.drupal.org/u/adriancid
+ * Diosbel Mezquía (diosbelmezquia) - https://www.drupal.org/u/diosbelmezquia
+ * Robert Ngo (Robert Ngo) - https://www.drupal.org/u/robert-ngo
+
+
+This project has been sponsored by:
+
+ * Ville de Montréal
+ * Lullabot
+ * Sapient

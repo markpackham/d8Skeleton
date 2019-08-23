@@ -8,7 +8,6 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Url;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\node_revision_delete\NodeRevisionDeleteInterface;
-use Drupal\Core\Messenger\MessengerInterface;
 
 /**
  * Provides a content type configuration deletion confirmation form.
@@ -16,9 +15,9 @@ use Drupal\Core\Messenger\MessengerInterface;
 class ContentTypeConfigurationDeleteForm extends ConfirmFormBase {
 
   /**
-   * Drupal\Core\Entity\EntityTypeManagerInterface definition.
+   * The entity type manager service.
    *
-   * @var Drupal\Core\Entity\EntityTypeManagerInterface
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
   protected $entityTypeManager;
 
@@ -30,31 +29,23 @@ class ContentTypeConfigurationDeleteForm extends ConfirmFormBase {
   protected $contentType;
 
   /**
-   * Drupal\node_revision_delete\NodeRevisionDeleteInterface definition.
+   * The node revision delete interface.
    *
-   * @var Drupal\node_revision_delete\NodeRevisionDeleteInterface
+   * @var \Drupal\node_revision_delete\NodeRevisionDeleteInterface
    */
   protected $nodeRevisionDelete;
 
   /**
-   * Provides messenger service.
-   *
-   * @var \Drupal\Core\Messenger\MessengerInterface
-   */
-  protected $messenger;
-
-  /**
    * Constructor.
    *
-   * @param Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    *   The entity type manager.
-   * @param Drupal\node_revision_delete\NodeRevisionDeleteInterface $node_revision_delete
+   * @param \Drupal\node_revision_delete\NodeRevisionDeleteInterface $node_revision_delete
    *   The node revision delete.
    */
-  public function __construct(EntityTypeManagerInterface $entity_type_manager, NodeRevisionDeleteInterface $node_revision_delete, MessengerInterface $messenger) {
+  public function __construct(EntityTypeManagerInterface $entity_type_manager, NodeRevisionDeleteInterface $node_revision_delete) {
     $this->entityTypeManager = $entity_type_manager;
     $this->nodeRevisionDelete = $node_revision_delete;
-    $this->messenger = $messenger;
   }
 
   /**
@@ -62,7 +53,7 @@ class ContentTypeConfigurationDeleteForm extends ConfirmFormBase {
    */
   public static function create(ContainerInterface $container) {
     return new static(
-      $container->get('entity_type.manager'), $container->get('node_revision_delete'), $container->get('messenger')
+      $container->get('entity_type.manager'), $container->get('node_revision_delete')
       );
   }
 
@@ -125,7 +116,7 @@ class ContentTypeConfigurationDeleteForm extends ConfirmFormBase {
     // Deleting the content type configuration.
     $this->nodeRevisionDelete->deleteContentTypeConfig($this->contentType->id());
     // Printing a confirmation message.
-    $this->messenger->addMessage($this->t('The Node Revision Delete configuration for the "@content_type" content type has been deleted.', ['@content_type' => $this->contentType->label()]));
+    $this->messenger()->addMessage($this->t('The Node Revision Delete configuration for the "@content_type" content type has been deleted.', ['@content_type' => $this->contentType->label()]));
     // Redirecting.
     $form_state->setRedirectUrl($this->getCancelUrl());
   }

@@ -27,7 +27,7 @@ interface NodeRevisionDeleteInterface {
    * Return the time string for the config_name parameter.
    *
    * @param string $config_name
-   *   The config name.
+   *   The config name (minimum_age_to_delete|when_to_delete).
    * @param int $number
    *   The number for the $config_name parameter configuration.
    *
@@ -55,12 +55,32 @@ interface NodeRevisionDeleteInterface {
    *
    * @param string $content_type
    *   Content type machine name.
-   *
-   * @return bool
-   *   Return TRUE if the content type config was deleted or FALSE if not
-   *   exists.
    */
   public function deleteContentTypeConfig($content_type);
+
+  /**
+   * Return the available values for time frequency.
+   *
+   * @param string $index
+   *   The index to retrieve.
+   *
+   * @return string
+   *   The index value (human readable value).
+   */
+  public function getTimeValues($index = NULL);
+
+  /**
+   * Return the time option in singular or plural.
+   *
+   * @param string $number
+   *   The number.
+   * @param string $time
+   *   The time option (days, weeks or months).
+   *
+   * @return string
+   *   The singular or plural value for the time.
+   */
+  public function getTimeNumberString($number, $time);
 
   /**
    * Return the list of candidate nodes for node revision delete.
@@ -78,5 +98,38 @@ interface NodeRevisionDeleteInterface {
    *   Array of nids.
    */
   public function getCandidatesNodes($content_type, $minimum_revisions_to_keep, $minimum_age_to_delete, $when_to_delete);
+
+  /**
+   * Get all revision that are older than current deleted revision.
+   *
+   * The revisions should have the same language as the current language of the
+   * page.
+   *
+   * @param int $nid
+   *   The node id.
+   * @param int $currently_deleted_revision_id
+   *   The current revision.
+   *
+   * @return array
+   *   An array with the previous revisions.
+   */
+  public function getPreviousRevisions($nid, $currently_deleted_revision_id);
+
+  /**
+   * Return the list of candidate revisions to be deleted.
+   *
+   * @param string $content_type
+   *   Content type machine name.
+   * @param int $minimum_revisions_to_keep
+   *   Minimum number of revisions to keep.
+   * @param int $minimum_age_to_delete
+   *   Minimum age in months of revision to delete.
+   * @param int $when_to_delete
+   *   Number of inactivity months to wait for delete a revision.
+   *
+   * @return array
+   *   Array of vids.
+   */
+  public function getCandidatesRevisions($content_type, $minimum_revisions_to_keep, $minimum_age_to_delete, $when_to_delete);
 
 }

@@ -5,7 +5,8 @@
  * Drush commands related to the Node Revision Delete module.
  */
 
-use Drupal\node_revision_delete\Utility\InternalFunctions;
+use Drupal\node_revision_delete\Utility\Time;
+use Drupal\node\Entity\Node;
 
 /**
  * Implements hook_drush_command().
@@ -29,10 +30,13 @@ function node_revision_delete_drush_command() {
       'nrd-last-execute' => dt('Show the last time that the node revision delete was made.'),
     ],
   ];
+
   $items['nrd-set-time'] = [
     'description' => dt('Configures the frequency with which to delete revisions while cron is running.'),
     'aliases' => ['nrd-st'],
     'arguments' => [
+      // Is not possible to call here Time::convertWordToTime() read more at
+      // https://drupal.stackexchange.com/q/268239/28275 .
       'time' => dt('The time value (never, every_hour, every_time, everyday, every_week, every_10_days, every_15_days, every_month, every_3_months, every_6_months, every_year or every_2_years)'),
     ],
     'examples' => [
@@ -73,6 +77,17 @@ function node_revision_delete_drush_command() {
       'nrd-minimum-age-to-delete-time 6 weeks' => dt('Set the maximum time for the minimum age to 6 weeks.'),
     ],
   ];
+  $items['nrd-delete-prior-revisions'] = [
+    'description' => dt('Delete all revisions prior to a revision.'),
+    'arguments' => [
+      'nid' => dt('The id of the node which revisions will be deleted.'),
+      'vid' => dt('The revision id, all prior revisions to this revision will be deleted.'),
+    ],
+    'aliases' => ['nrd-dpr'],
+    'examples' => [
+      'nrd-delete-prior-revisions 1 3' => dt('Delete all revisions prior to revision id 3 of node id 1.'),
+    ],
+  ];
   return $items;
 }
 
@@ -102,8 +117,11 @@ function node_revision_delete_drush_help($section) {
     case 'drush:nrd-when-to-delete-time':
       return dt('Configures the time options for the inactivity time that the revision must have to be deleted.');
 
-    case 'drush:nrd-when-to-delete-time':
+    case 'drush:nrd-minimum-age-to-delete-time':
       return dt('Configures time options to know the minimum age that the revision must have to be deleted.');
+
+    case 'drush:nrd-delete-prior-revisions':
+      return dt('Define which prior revisions to which revision of which node to delete.');
   }
 }
 
@@ -154,12 +172,15 @@ function drush_node_revision_delete_nrd_delete_cron_run() {
  * Callback for the nrd-last_execute command.
  */
 function drush_node_revision_delete_nrd_last_execute() {
-  // Getting the config.
-  $config = $config = \Drupal::config('node_revision_delete.settings');
-  // Getting the value from the config.
-  $last_execute = $config->get('node_revision_delete_last_execute');
-  $last_execute = \Drupal::service('date.formatter')->format($last_execute);
-  $message = dt('The last time when node revision delete was made was: @last_execute.', ['@last_execute' => $last_execute]);
+  // Getting the value.
+  $last_execute = \Drupal::state()->get('node_revision_delete.last_execute', 0);
+  if (!empty($last_execute)) {
+    $last_execute = \Drupal::service('date.formatter')->format($last_execute);
+    $message = dt('The last time when node revision delete was made was: @last_execute.', ['@last_execute' => $last_execute]);
+  }
+  else {
+    $message = dt('The removal of revisions through the module node revision delete has never been executed on this site.');
+  }
   drush_print($message);
 }
 
@@ -170,18 +191,21 @@ function drush_node_revision_delete_nrd_set_time($time = '') {
   // Getting an editable config because we will get and set a value.
   $config = \Drupal::service('config.factory')->getEditable('node_revision_delete.settings');
   // Check for correct argument.
-  $options = InternalFunctions::getTimeValues();
+  $options = Time::convertWordToTime();
   if (!in_array($time, array_keys($options))) {
     if (!empty($time)) {
       drush_log(dt('"@time_value" is not a valid time argument.', ['@time_value' => $time]), 'warning');
     }
-    $time = drush_choice($options, dt('Choose the frequency with which to delete revisions while cron is running:'));
+    $time = drush_choice(\Drupal::service('node_revision_delete')->getTimeValues(), dt('Choose the frequency with which to delete revisions while cron is running:'));
+  }
+  else {
+    $time = $options[$time];
   }
   // Saving the values in the config.
   $config->set('node_revision_delete_time', $time);
   $config->save();
-  $time = InternalFunctions::getTimeValues($time);
-  $message = dt('The frequency with which to delete revisions while cron is running was set to: @time.', ['@time' => $time]);
+  $time_value = \Drupal::service('node_revision_delete')->getTimeValues($time);
+  $message = dt('The frequency with which to delete revisions while cron is running was set to: @time.', ['@time' => $time_value]);
   drush_log($message, 'success');
 }
 
@@ -193,7 +217,7 @@ function drush_node_revision_delete_nrd_get_time() {
   $config = $config = \Drupal::config('node_revision_delete.settings');
   // Getting the values from the config.
   $time = $config->get('node_revision_delete_time');
-  $time = InternalFunctions::getTimeValues($time);
+  $time = \Drupal::service('node_revision_delete')->getTimeValues($time);
   $message = dt('The frequency with which to delete revisions while cron is running is: @time.', ['@time' => $time]);
   drush_print($message);
 }
@@ -257,8 +281,7 @@ function drush_node_revision_delete_nrd_when_to_delete_time() {
     // configuration if the new value is lower than the actual.
     \Drupal::service('node_revision_delete')->updateTimeMaxNumberConfig('when_to_delete', $args[0]);
 
-    // Is singular or plural?
-    $time = InternalFunctions::getTimeNumberString($args[0], $args[1]);
+    $time = \Drupal::service('node_revision_delete')->getTimeNumberString($args[0], $args[1]);
     $message = dt('The maximum inactivity time was set to @max_number @time.', ['@max_number' => $args[0], '@time' => $time]);
     drush_log($message, 'success');
   }
@@ -268,8 +291,7 @@ function drush_node_revision_delete_nrd_when_to_delete_time() {
     $max_number = $node_revision_delete_when_to_delete_time['max_number'];
     $time = $node_revision_delete_when_to_delete_time['time'];
 
-    // Is singular or plural?
-    $time = InternalFunctions::getTimeNumberString($max_number, $time);
+    $time = \Drupal::service('node_revision_delete')->getTimeNumberString($max_number, $time);
     $message = dt('The maximum inactivity time is: @max_number @time.', ['@max_number' => $max_number, '@time' => $time]);
     drush_print($message);
   }
@@ -303,7 +325,7 @@ function drush_node_revision_delete_nrd_minimum_age_to_delete_time() {
     \Drupal::service('node_revision_delete')->updateTimeMaxNumberConfig('minimum_age_to_delete', $args[0]);
 
     // Is singular or plural?
-    $time = InternalFunctions::getTimeNumberString($args[0], $args[1]);
+    $time = \Drupal::service('node_revision_delete')->getTimeNumberString($args[0], $args[1]);
     $message = dt('The maximum time for the minimum age was set to @max_number @time.', ['@max_number' => $args[0], '@time' => $time]);
     drush_log($message, 'success');
   }
@@ -314,10 +336,72 @@ function drush_node_revision_delete_nrd_minimum_age_to_delete_time() {
     $time = $node_revision_delete_minimum_age_to_delete_time['time'];
 
     // Is singular or plural?
-    $time = InternalFunctions::getTimeNumberString($max_number, $time);
+    $time = \Drupal::service('node_revision_delete')->getTimeNumberString($max_number, $time);
     $message = dt('The maximum time for the minimum age is: @max_number @time.', ['@max_number' => $max_number, '@time' => $time]);
     drush_print($message);
   }
+}
+
+/**
+ * Implements drush_hook_COMMAND_validate().
+ */
+function drush_node_revision_delete_nrd_delete_prior_revisions_validate() {
+  $args = func_get_args();
+  // Check for only 2 arguments.
+  if (count($args) != 2) {
+    return drush_set_error('NODE_REVISION_DELETE_INVALID_ARGUMENT', dt('This command use two arguments.'));
+  }
+  // Check if the first argument is a valid node id.
+  $node = Node::load($args[0]);
+  if (is_null($node)) {
+    return drush_set_error('NODE_REVISION_DELETE_INVALID_ARGUMENT', dt('The first argument @nid is not a valid node id.', ['@nid' => $args[0]]));
+  }
+  // Check if the second argument is a valid revision id.
+  $revision = \Drupal::entityTypeManager()->getStorage('node')->loadRevision($args[1]);
+  if (is_null($revision)) {
+    return drush_set_error('NODE_REVISION_DELETE_INVALID_ARGUMENT', dt('The second argument @vid is not a valid revision id.', ['@vid' => $args[1]]));
+  }
+  // Check if the nid and the vid match the same node.
+  if ($node->id() !== $revision->id()) {
+    return drush_set_error('NODE_REVISION_DELETE_INVALID_ARGUMENT', dt('The revision id @vid doesn\'t belong to the node id @nid.', ['@nid' => $args[0], '@vid' => $args[1]]));
+  }
+  // Check if exists prior revisions.
+  if (!count(\Drupal::service('node_revision_delete')->getPreviousRevisions($args[0], $args[1]))) {
+    drush_log(dt('There is no revision prior to revision @vid.', ['@vid' => $args[1]]), 'warning');
+    return FALSE;
+  }
+}
+
+/**
+ * Callback for nrd-delete-prior-revisions command.
+ *
+ * @param string|int $nid
+ *   - The nid of the node to delete.
+ * @param string|int $vid
+ *   - The revision id which is used to find prior revisions.
+ *
+ * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+ * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
+ */
+function drush_node_revision_delete_nrd_delete_prior_revisions($nid, $vid) {
+
+  if (drush_confirm(dt("Additionally, do you want to delete the revision @vid?", ['@vid' => $vid]))) {
+    \Drupal::entityTypeManager()->getStorage('node')->deleteRevision($vid);
+    drush_print(dt('The revision @vid was sucessfully deleted.', ['@vid' => $vid]));
+  }
+
+  // Get a list of revisions to delete.
+  $revisions_before = \Drupal::service('node_revision_delete')->getPreviousRevisions($nid, $vid);
+
+  // Loop through the list of revisions, then delete them one by one.
+  foreach ($revisions_before as $revision) {
+    \Drupal::entityTypeManager()->getStorage('node')->deleteRevision($revision->getRevisionId());
+  }
+
+  // Print out success message.
+  // @TODO: Add a pluran message for the case only one revision is deleted.
+  $message = dt('Successfully deleted @count revision(s) of node @nid.', ['@count' => count($revisions_before), '@nid' => $nid]);
+  drush_print($message);
 }
 
 /**

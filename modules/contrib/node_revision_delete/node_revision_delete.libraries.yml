@@ -1,11 +1,12 @@
 admin_settings:
-  version: 1.0.0
   css:
     theme:
-      css/node_revision_delete.css: {}
+      css/node_revision_delete.admin.theme.css: {}
 
 content_types:
-  version: 1.0.0
+  css:
+    theme:
+      css/node_revision_delete.theme.css: {}
   js:
     js/content_types.js: {}
   dependencies:

@@ -4,11 +4,10 @@ namespace Drupal\node_revision_delete\Form;
 
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Render\RendererInterface;
+use Drupal\node_revision_delete\NodeRevisionDeleteBatch;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Url;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
-use Drupal\node_revision_delete\Utility\InternalFunctions;
 use Drupal\node_revision_delete\NodeRevisionDeleteInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 
@@ -20,23 +19,16 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 class NodeRevisionDeleteAdminSettings extends ConfigFormBase {
 
   /**
-   * Drupal\Core\Render\RendererInterface definition.
+   * The entity type manager service.
    *
-   * @var Drupal\Core\Render\RendererInterface
-   */
-  protected $renderer;
-
-  /**
-   * Drupal\Core\Entity\EntityTypeManagerInterface definition.
-   *
-   * @var Drupal\Core\Entity\EntityTypeManagerInterface
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
   protected $entityTypeManager;
 
   /**
-   * Drupal\node_revision_delete\NodeRevisionDeleteInterface definition.
+   * The node revision delete interface.
    *
-   * @var Drupal\node_revision_delete\NodeRevisionDeleteInterface
+   * @var \Drupal\node_revision_delete\NodeRevisionDeleteInterface
    */
   protected $nodeRevisionDelete;
 
@@ -45,17 +37,14 @@ class NodeRevisionDeleteAdminSettings extends ConfigFormBase {
    *
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    *   The factory for configuration objects.
-   * @param Drupal\Core\Render\RendererInterface $renderer
-   *   The renderer.
-   * @param Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    *   The entity type manager.
-   * @param Drupal\node_revision_delete\NodeRevisionDeleteInterface $node_revision_delete
+   * @param \Drupal\node_revision_delete\NodeRevisionDeleteInterface $node_revision_delete
    *   The node revision delete.
    */
-  public function __construct(ConfigFactoryInterface $config_factory, RendererInterface $renderer, EntityTypeManagerInterface $entity_type_manager, NodeRevisionDeleteInterface $node_revision_delete) {
+  public function __construct(ConfigFactoryInterface $config_factory, EntityTypeManagerInterface $entity_type_manager, NodeRevisionDeleteInterface $node_revision_delete) {
     parent::__construct($config_factory);
 
-    $this->renderer = $renderer;
     $this->entityTypeManager = $entity_type_manager;
     $this->nodeRevisionDelete = $node_revision_delete;
   }
@@ -66,7 +55,6 @@ class NodeRevisionDeleteAdminSettings extends ConfigFormBase {
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('config.factory'),
-      $container->get('renderer'),
       $container->get('entity_type.manager'),
       $container->get('node_revision_delete')
     );
@@ -92,8 +80,6 @@ class NodeRevisionDeleteAdminSettings extends ConfigFormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
-    // Getting the config variables.
-    $config = $this->config('node_revision_delete.settings');
     // Table header.
     $header = [
       $this->t('Content type'),
@@ -102,12 +88,11 @@ class NodeRevisionDeleteAdminSettings extends ConfigFormBase {
       $this->t('Minimum age'),
       $this->t('When to delete'),
       $this->t('Candidate nodes'),
+      $this->t('Candidate revisions'),
       $this->t('Operations'),
     ];
     // Table rows.
     $rows = [];
-    // Getting the config variables.
-    $node_revision_delete_track = $config->get('node_revision_delete_track');
     // Looking for all the content types.
     $content_types = $this->entityTypeManager->getStorage('node_type')->loadMultiple();
     // Check if exists candidates nodes.
@@ -121,7 +106,9 @@ class NodeRevisionDeleteAdminSettings extends ConfigFormBase {
     ];
 
     foreach ($content_types as $content_type) {
-      $route_parameters = ['node_type' => $content_type->id()];
+      // Getting the content type machine name.
+      $content_type_machine_name = $content_type->id();
+      $route_parameters = ['node_type' => $content_type_machine_name];
       // Operations dropbutton.
       $dropbutton = [
         '#type' => 'dropbutton',
@@ -134,28 +121,35 @@ class NodeRevisionDeleteAdminSettings extends ConfigFormBase {
         ],
       ];
 
+      // Getting the config variables.
+      $third_party_settings = $this->config('node.type.' . $content_type_machine_name)->get('third_party_settings');
+
       // Searching the revisions to keep for each content type.
-      if (isset($node_revision_delete_track[$content_type->id()])) {
+      if (isset($third_party_settings['node_revision_delete'])) {
         // Minimum revisions to keep in the database.
-        $minimum_revisions_to_keep = $node_revision_delete_track[$content_type->id()]['minimum_revisions_to_keep'];
+        $minimum_revisions_to_keep = $third_party_settings['node_revision_delete']['minimum_revisions_to_keep'];
 
         // Minimum age to delete (is a number, 0 for none).
-        $minimum_age_to_delete_number = $node_revision_delete_track[$content_type->id()]['minimum_age_to_delete'];
+        $minimum_age_to_delete_number = $third_party_settings['node_revision_delete']['minimum_age_to_delete'];
         $minimum_age_to_delete = (bool) $minimum_age_to_delete_number ? $this->nodeRevisionDelete->getTimeString('minimum_age_to_delete', $minimum_age_to_delete_number) : $this->t('None');
 
         // When to delete time (is a number, 0 for always).
-        $when_to_delete_number = $node_revision_delete_track[$content_type->id()]['when_to_delete'];
+        $when_to_delete_number = $third_party_settings['node_revision_delete']['when_to_delete'];
         $when_to_delete = (bool) $when_to_delete_number ? $this->nodeRevisionDelete->getTimeString('when_to_delete', $when_to_delete_number) : $this->t('Always delete');
 
-        // Number of candidates nodes to delete theirs revision.
-        $candidate_nodes = count($this->nodeRevisionDelete->getCandidatesNodes($content_type->id(), $minimum_revisions_to_keep, $minimum_age_to_delete_number, $when_to_delete_number));
+        // Number of candidate nodes to delete theirs revision.
+        $candidate_nodes = count($this->nodeRevisionDelete->getCandidatesNodes($content_type_machine_name, $minimum_revisions_to_keep, $minimum_age_to_delete_number, $when_to_delete_number));
+
+        // Number of candidate revisions to delete.
+        $candidate_revisions = count($this->nodeRevisionDelete->getCandidatesRevisions($content_type_machine_name, $minimum_revisions_to_keep, $minimum_age_to_delete_number, $when_to_delete_number));
+
         // If we have candidates nodes then we will allow to run the batch job.
         if ($candidate_nodes && !$exists_candidates_nodes) {
           $exists_candidates_nodes = TRUE;
         }
 
         $route_parameters = [
-          'content_type' => $content_type->id(),
+          'content_type' => $content_type_machine_name,
         ];
         // Action to delete the configuration for the content type.
         $dropbutton['#links']['delete'] = [
@@ -165,24 +159,32 @@ class NodeRevisionDeleteAdminSettings extends ConfigFormBase {
       }
       else {
         $minimum_revisions_to_keep = $this->t('Untracked');
-        $candidate_nodes = $this->t('Untracked');
-        $when_to_delete = $this->t('Untracked');
         $minimum_age_to_delete = $this->t('Untracked');
+        $when_to_delete = $this->t('Untracked');
+        $candidate_nodes = $this->t('Untracked');
+        $candidate_revisions = $this->t('Untracked');
       }
 
-      // Rendering the dropdown.
-      $dropbutton = $this->renderer->render($dropbutton);
       // Setting the row values.
       $rows[] = [
         $content_type->label(),
-        $content_type->id(),
+        $content_type_machine_name,
         $minimum_revisions_to_keep,
         $minimum_age_to_delete,
         $when_to_delete,
         $candidate_nodes,
-        $dropbutton,
+        $candidate_revisions,
+        [
+          'data' => $dropbutton,
+        ],
       ];
     }
+
+    // Sort the rows by content type name.
+    usort($rows, function ($a, $b) {
+      return ($a[0] <=> $b[0]);
+    });
+
     // Table with current configuration.
     $form['current_configuration'] = [
       '#type' => 'table',
@@ -197,6 +199,9 @@ class NodeRevisionDeleteAdminSettings extends ConfigFormBase {
       ],
     ];
 
+    // Getting the config variables.
+    $config = $this->config('node_revision_delete.settings');
+
     // Configuration for node_revision_delete_cron variable.
     $form['node_revision_delete_cron'] = [
       '#type' => 'number',
@@ -207,7 +212,7 @@ class NodeRevisionDeleteAdminSettings extends ConfigFormBase {
     ];
 
     // Available options for node_revision_delete_time variable.
-    $options_node_revision_delete_time = InternalFunctions::getTimeValues();
+    $options_node_revision_delete_time = $this->nodeRevisionDelete->getTimeValues();
     $form['node_revision_delete_time'] = [
       '#type' => 'select',
       '#title' => $this->t('How often should revision be deleted while cron runs?'),
@@ -323,8 +328,8 @@ class NodeRevisionDeleteAdminSettings extends ConfigFormBase {
     ];
     // We need to update the max_number in the existing content type
     // configuration if the new value is lower than the actual.
-    $this->nodeRevisionDelete->updateTimeMaxNumberConfig('when_to_delete', $when_to_delete_time_max_number);
     $this->nodeRevisionDelete->updateTimeMaxNumberConfig('minimum_age_to_delete', $minimum_age_to_delete_time_max_number);
+    $this->nodeRevisionDelete->updateTimeMaxNumberConfig('when_to_delete', $when_to_delete_time_max_number);
     // Saving the configuration.
     $this->config('node_revision_delete.settings')
       ->set('node_revision_delete_cron', $form_state->getValue('node_revision_delete_cron'))
@@ -332,6 +337,54 @@ class NodeRevisionDeleteAdminSettings extends ConfigFormBase {
       ->set('node_revision_delete_when_to_delete_time', $node_revision_delete_when_to_delete_time)
       ->set('node_revision_delete_minimum_age_to_delete_time', $node_revision_delete_minimum_age_to_delete_time)
       ->save();
+
+    // Getting the dry run value.
+    $dry_run = $form_state->getValue('dry_run');
+
+    // Looking for all the content types.
+    $content_types = $this->entityTypeManager->getStorage('node_type')->loadMultiple();
+
+    $operations = [];
+    // Loop over all the content types to search the revisions to delete.
+    foreach ($content_types as $content_type) {
+      // Getting the content type machine name.
+      $content_type_machine_name = $content_type->id();
+      // Getting the config variables.
+      $third_party_settings = $this->config('node.type.' . $content_type_machine_name)
+        ->get('third_party_settings');
+
+      if (isset($third_party_settings['node_revision_delete'])) {
+        // Minimum revisions to keep in the database.
+        $minimum_revisions_to_keep = $third_party_settings['node_revision_delete']['minimum_revisions_to_keep'];
+
+        // Minimum age to delete (is a number, 0 for none).
+        $minimum_age_to_delete_number = $third_party_settings['node_revision_delete']['minimum_age_to_delete'];
+
+        // When to delete time (is a number, 0 for always).
+        $when_to_delete_number = $third_party_settings['node_revision_delete']['when_to_delete'];
+
+        // The candidate revisions to delete.
+        $candidate_revisions = $this->nodeRevisionDelete->getCandidatesRevisions($content_type_machine_name, $minimum_revisions_to_keep, $minimum_age_to_delete_number, $when_to_delete_number);
+
+        // Loop through the revisions to delete, create batch operations array.
+        foreach ($candidate_revisions as $revision) {
+          $operations[] = [
+            [NodeRevisionDeleteBatch::class, 'deleteRevision'],
+            [$revision, $dry_run],
+          ];
+        }
+      }
+    }
+    // Create batch to delete revisions.
+    $batch = [
+      'title' => t('Deleting revisions'),
+      'init_message' => t('Starting to delete revisions.'),
+      'progress_message' => t('Deleted @current out of @total (@percentage%). Estimated time: @estimate.'),
+      'error_message' => t('Error deleting revisions.'),
+      'operations' => $operations,
+      'finished' => [NodeRevisionDeleteBatch::class, 'finish'],
+    ];
+    batch_set($batch);
   }
 
 }

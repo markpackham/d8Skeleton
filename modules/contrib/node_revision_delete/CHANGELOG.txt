@@ -1,26 +1,139 @@
-Node Revision Delete 8.1.0-alpha4, 2018-04-04
----------------------------------------------
-Changes since 8.1.0-alpha3:
+Node Revision Delete 8.x-1.0-beta1, 2019-08-20
+----------------------------------------------
+Changes since 8.x-1.0-alpha4:
+
+- #2915292 by adriancid: Delete node revisions on the module config page.
+- #3076168 by adriancid: Identify the candidate revisions using only the minimum
+  number of revisions to keep.
+- #3076131 by adriancid: Add an option to delete the actual revision in the
+  prior delete revision drush command.
+- #3073007 by Robert Ngo, adriancid: Create a drush command to delete the prior
+  revisions of a node.
+- #3075824 by adriancid: Identify the candidate nodes using only the minimum
+  number of revisions to keep.
+- #3012573 by Pasqualle, adriancid: Store the content type configuration into
+  its configuration file.
+- #3075183 by adriancid: Add the Node module as a dependency.
+- #3075150 by adriancid: Update the maintainers list.
+- #3075077 by adriancid: Add an error message for the node revision generate
+  batch.
+- #3074628 by adriancid: Improve the message about the prior revision deletion.
+- #3074570 by Robert Ngo, adriancid: getPreviousRevisions is returning results
+  including current revision.
+- #3072974 by Robert Ngo, adriancid: Add batch operation function for node
+  revisions bulk delete.
+- #3072968 by Robert Ngo, adriancid: Add form submit handler for bulk delete
+  node revisions.
+- #3073010 by adriancid: Update the module help with the new features coming
+  from the node_revision_bulk_delete module.
+- #3072997 by adriancid: Update the README.txt with the new features coming from
+  the node_revision_bulk_delete module.
+- #3073697 by Robert Ngo, adriancid: Update table Revisions to delete with real
+  data.
+- #3073399 by Robert Ngo, adriancid: Function to get revisions prior to a
+  specific revision.
+- #3073314 by adriancid: Fix coding standard issues.
+- #3073304 by adriancid: Hide the title and revision date on mobile devices.
+- #3072966 by Robert Ngo, adriancid: Add checkbox to delete all revisions of a
+  node.
+- #3058355 by slydevil, diosbelmezquia, adriancid: Add batch processing to
+  generate revisions.
+- #2905912 by slydevil, kalabro, adriancid, mmjvb: Allow to alter node
+  candidates.
+- #3059991 by slydevil, adriancid: Improve the order in which the content types
+  are shown.
+- #3021607 by diosbelmezquia, adriancid: Generate Revisions on submit Form.
+- #3013529 by nicksanta, adriancid: Duplicate drush command
+  help nrd-when-to-delete-time.
+- #3056749 by adriancid: Show a message if the drush command nrd-le is called
+  and the removal of revisions has never been executed.
+- #3056747 by adriancid: Convert the configuration variable
+  node_revision_delete_last_execute to a state variable.
+- #3024863 by diosbelmezquia, adriancid: Properties with unknown classes as its
+  type.
+- #3022703 by diosbelmezquia, adriancid: Create the menu link for the Generate
+  revisions form.
+- #3022083 by adriancid, diosbelmezquia: Create the README.txt file for the node
+  revision generate module.
+- #3022088 by adriancid, diosbelmezquia: Create the composer.json file.
+- #3021493 by diosbelmezquia, adriancid, riddhi.addweb: Create the help page for
+  the node_revision_generate module.
+- #3021535 by diosbelmezquia, adriancid: Get all nodes types to show in the
+  generate revisions form.
+- #3021531 by diosbelmezquia, adriancid: Create basic structure of the generate
+  revisions form.
+- #3021324 by diosbelmezquia, adriancid: Create a permission to allow the
+  generation of revisions.
+- #3021317 by diosbelmezquia, adriancid: Create the
+  node_revision_generate.info.yml.
+- #3014350 by adriancid: Add the project sponsors to the README.txt file.
+- #3009672 by adriancid: Fix coding standard format.
+- #3002932 by adriancid: Don't render elements in the form class.
+- #3002897 by adriancid: Override the drupal.content_types library in the
+  info.yml file.
+- #3001366 by adriancid: Use the correct file name for module css files.
+- #2986433 by Christopher Riley, adriancid, Berdir: Class
+  'Drupal\node_revision_delete\Utility\Time' not found.
+- #2992135 by adriancid, Berdir: Transfer the getTimeNumberString method to the
+  node_revision_delete service.
+- #2992133 by adriancid, Berdir: Transfer the getTimeValues method to the
+  node_revision_delete service.
+- #2992125 by adriancid: Create a test for the variables in the configuration
+  form.
+- #2991388 by adriancid, Berdir: Cannot redeclare
+  Drupal\node_revision_delete\Utility\t().
+- #2990521 by adriancid: Rename the NodeRevisionDeleteTest file to
+  NodeRevisionDeleteConfigTest.
+- #2990513 by adriancid: Create a test to test the saveContentTypeConfig method.
+- #2988462 by adriancid: Create a test to test the deleteContentTypeConfig
+  method.
+- #2988387 by adriancid: Create a test to test the default configuration
+  variables.
+- #2988222 by adriancid: Create a trait for commons test functionalities.
+- #2988209 by adriancid: Create a test to test the configuration file update by
+  the updateTimeMaxNumberConfig method.
+- #2987928 by adriancid: Create a test to test the getTimeString method.
+- #2987670 by adriancid: Create a test to test the updateTimeMaxNumberConfig
+  method.
+- #2987209 by adriancid: Return the node_revision_delete_track values in the
+  updateTimeMaxNumberConfig method
+- #2987207 by adriancid: getCandidatesNodes method is not always returning an
+  array.
+- #2986626 by adriancid: Create a test to test the convertWordToTime method.
+- #2986622 by adriancid: Create a test to test the getTimeValues method.
+- #2973910 by generalredneck, adriancid: Simplify the logic for the
+  node_revision_delete_time variable.
+- #2986349 by adriancid: Create a test to test the getTimeNumberString method.
+- #2971858 by pietpomp, adriancid, mmjvb: Use the brackets with the table names.
+- #2969638 by adriancid: Use the MessengerTrait instead of inject the messenger
+  service in forms.
+- #2969336 by adriancid: Fix the module version in the CHANGELOG.txt.
+- #2959288 by adriancid: Use admin theme for
+  node_revision_delete.content_type_configuration_delete_confirm route.
+
+Node Revision Delete 8.x-1.0-alpha4, 2018-04-04
+-----------------------------------------------
+Changes since 8.x-1.0-alpha3:
 
 - #2958602 by adriancid: Replace drupal_set_message() by Messenger service.
-- #2948887 by adriancid: NodeRevisionDeleteAdminSettings class constructor is 
+- #2948887 by adriancid: NodeRevisionDeleteAdminSettings class constructor is
   not calling the parent constructor.
 - #2948881: Add the docblock to the constructors.
-- #2948879 by adriancid: Visibility must be declared on class and interface 
+- #2948879 by adriancid: Visibility must be declared on class and interface
   methods.
-- #2948876 by adriancid: Create an interface to implement it in the 
+- #2948876 by adriancid: Create an interface to implement it in the
   node_revision_delete service.
 - #2944485 by adriancid: Create the composer.json file.
-- #2942235 by adriancid: If the content type is not configured to delete node 
+- #2942235 by adriancid: If the content type is not configured to delete node
   revisions show the candidates nodes as untracked.
-- #2942230 by adriancid: Put the _node_revision_delete_candidates function 
+- #2942230 by adriancid: Put the _node_revision_delete_candidates function
   inside the node_revision_delete service.
-- #2942226 by adriancid: Put the 
-  _node_revision_delete_delete_content_type_config function inside the 
+- #2942226 by adriancid: Put the
+  _node_revision_delete_delete_content_type_config function inside the
   node_revision_delete service.
 - #2942225 by adriancid: Put the _node_revision_delete_save_content_type_config
   function inside the node_revision_delete service.
-- #2942046 by adriancid: Put the _node_revision_delete_time_string() function 
+- #2942046 by adriancid: Put the _node_revision_delete_time_string() function
   inside the node_revision_delete service.
 - #2941896 by adriancid: Create the node_revision_delete service.
 - #2941894 by adriancid: Attach the css for the admin form in the render array.
@@ -45,9 +158,9 @@ Changes since 8.1.0-alpha3:
 - #2913006 by adriancid: Define how many revisions you want to delete per cron
   run with a number form element.
 
-Node Revision Delete 8.1.0-alpha3, 2017-09-12
----------------------------------------------
-Changes since 8.1.0-alpha2:
+Node Revision Delete 8.x-1.0-alpha3, 2017-09-12
+-----------------------------------------------
+Changes since 8.x-1.0-alpha2:
 
 - #2908345 by adriancid: Change the permission name in the module help page.
 - #2907680 by adriancid: Add the sticky property to the table shown in the
@@ -55,18 +168,18 @@ Changes since 8.1.0-alpha2:
 - #2900979 by adriancid: Untranslated strings.
 - #2900518 by adriancid: Drush command to configure time options for the minimum
   age to delete revisions.
-- #2899740 by adriancid: Drush command to configure time options to know when 
+- #2899740 by adriancid: Drush command to configure time options to know when
   the revision should be deleted.
 - #2899066 by adriancid: Drush command to configure frequency with which to
   delete revisions while cron is running
 - #2846726 by proconnor15, adriancid: Add option to delete revisions every 2
   years while cron runs.
-- #2895498 by adriancid: Drush command to get the last time that the node 
+- #2895498 by adriancid: Drush command to get the last time that the node
   revision delete was made.
 - #2892502 by adriancid: Validate that the parameters exists before use it in
   array_unshift() function.
 - #2892441 by adriancid: Change the drush error codes.
-- by adriancid: Add a dry-run option. 
+- by adriancid: Add a dry-run option.
 - by adriancid: Change drush ndr-delete-cron-run command name to
   nrd-delete-cron-run.
 - by adriancid: Create an option group in the content type edit form.
@@ -74,9 +187,9 @@ Changes since 8.1.0-alpha2:
 - by adriancid: Disable the 'Delete revisions now' option if there not exists
   candidates nodes with revisions to delete.
 
-Node Revision Delete 8.1.0-alpha2, 2017-05-03
----------------------------------------------
-Changes since 8.1.0-alpha1:
+Node Revision Delete 8.x-1.0-alpha2, 2017-05-03
+-----------------------------------------------
+Changes since 8.x-1.0-alpha1:
 
 - by adriancid: Drush command to configure how many revisions delete per cron
   run.
@@ -91,6 +204,6 @@ Changes since 8.1.0-alpha1:
 - by adriancid: Add a config variable to configure the minimum_revisions_to_keep
   variable.
 
-Node Revision Delete 8.1.0-alpha1, 2017-04-19
----------------------------------------------
+Node Revision Delete 8.x-1.0-alpha1, 2017-04-19
+-----------------------------------------------
 - Initial release.
