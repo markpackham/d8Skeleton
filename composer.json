@@ -74,7 +74,8 @@
         "drupal/migrate_tools": "^4.1",
         "drupal/migrate_plus": "^4.2",
         "drupal/advagg": "^4.0",
-        "drupal/coder": "^8.3"
+        "drupal/coder": "^8.3",
+        "drupal/url_embed": "^1.0@alpha"
     },
     "replace": {
         "drupal/core": "^8.7"
