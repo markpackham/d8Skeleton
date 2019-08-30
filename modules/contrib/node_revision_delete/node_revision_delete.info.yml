@@ -19,7 +19,7 @@ libraries-override:
     # https://www.drupal.org/node/2871619 will be fixed.
   node/drupal.content_types: node_revision_delete/content_types
 
-# Information added by Drupal.org packaging script on 2019-08-20
-version: '8.x-1.0-beta1'
+# Information added by Drupal.org packaging script on 2019-08-27
+version: '8.x-1.0-beta2'
 project: 'node_revision_delete'
-datestamp: 1566344001
+datestamp: 1566920000

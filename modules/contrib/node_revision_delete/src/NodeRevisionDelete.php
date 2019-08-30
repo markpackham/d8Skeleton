@@ -86,27 +86,41 @@ class NodeRevisionDelete implements NodeRevisionDeleteInterface {
    * {@inheritdoc}
    */
   public function updateTimeMaxNumberConfig($config_name, $max_number) {
-    // Looking for all the content types.
-    $content_types = $this->entityTypeManager->getStorage('node_type')->loadMultiple();
+    // Looking for all the configured content types.
+    $content_types = $this->getConfiguredContentTypes();
     // Checking the when_to_delete value for all the configured content types.
     foreach ($content_types as $content_type) {
-      $changed = TRUE;
       // Getting the config variables.
       $config = $this->configFactory->getEditable('node.type.' . $content_type->id());
       $third_party_settings = $config->get('third_party_settings');
       // If the new defined max_number is smaller than the defined
       // when_to_delete value in the config, we need to change the stored config
       // value.
-      if (isset($third_party_settings['node_revision_delete'][$config_name]) && $max_number < $third_party_settings['node_revision_delete'][$config_name]) {
+      if ($max_number < $third_party_settings['node_revision_delete'][$config_name]) {
         $third_party_settings['node_revision_delete'][$config_name] = $max_number;
-        $changed = TRUE;
-      }
-      // Saving only if we have changes.
-      if ($changed) {
         // Saving the values in the config.
         $config->set('third_party_settings', $third_party_settings)->save();
       }
     }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getConfiguredContentTypes() {
+    $configured_content_types = [];
+    // Looking for all the content types.
+    $content_types = $this->entityTypeManager->getStorage('node_type')->loadMultiple();
+
+    foreach ($content_types as $content_type) {
+      // Getting the third_party_settings settings.
+      $third_party_settings = $this->configFactory->get('node.type.' . $content_type->id())->get('third_party_settings');
+      // Checking if the content type is configured.
+      if (isset($third_party_settings['node_revision_delete'])) {
+        $configured_content_types[] = $content_type;
+      }
+    }
+    return $configured_content_types;
   }
 
   /**
@@ -128,6 +142,29 @@ class NodeRevisionDelete implements NodeRevisionDeleteInterface {
           '@time' => $time,
         ]);
     }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getTimeNumberString($number, $time) {
+    // Time options.
+    $time_options = [
+      'days' => [
+        'singular' => $this->t('day'),
+        'plural' => $this->t('days'),
+      ],
+      'weeks' => [
+        'singular' => $this->t('week'),
+        'plural' => $this->t('weeks'),
+      ],
+      'months' => [
+        'singular' => $this->t('month'),
+        'plural' => $this->t('months'),
+      ],
+    ];
+
+    return $number == 1 ? $time_options[$time]['singular'] : $time_options[$time]['plural'];
   }
 
   /**
@@ -196,48 +233,6 @@ class NodeRevisionDelete implements NodeRevisionDeleteInterface {
   /**
    * {@inheritdoc}
    */
-  public function getTimeNumberString($number, $time) {
-    // Time options.
-    $time_options = [
-      'days' => [
-        'singular' => $this->t('day'),
-        'plural' => $this->t('days'),
-      ],
-      'weeks' => [
-        'singular' => $this->t('week'),
-        'plural' => $this->t('weeks'),
-      ],
-      'months' => [
-        'singular' => $this->t('month'),
-        'plural' => $this->t('months'),
-      ],
-    ];
-
-    return $number == 1 ? $time_options[$time]['singular'] : $time_options[$time]['plural'];
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getCandidatesNodes($content_type, $minimum_revisions_to_keep, $minimum_age_to_delete, $when_to_delete) {
-    $query = $this->connection->select('node', 'n');
-    $query->join('node_revision', 'r', 'r.nid = n.nid');
-    $query->fields('n', ['nid']);
-    $query->addExpression('COUNT(*)', 'total');
-    $query->condition('n.type', $content_type);
-    $query->groupBy('n.nid');
-    $query->having('COUNT(*) > ' . $minimum_revisions_to_keep);
-
-    // Allow other modules to alter candidates query.
-    $query->addTag('node_revision_delete_candidates');
-    $query->addTag('node_revision_delete_candidates_' . $content_type);
-
-    return $query->execute()->fetchCol();
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function getPreviousRevisions($nid, $currently_deleted_revision_id) {
     // Getting the node storage.
     $node_storage = $this->entityTypeManager->getStorage('node');
@@ -248,28 +243,33 @@ class NodeRevisionDelete implements NodeRevisionDeleteInterface {
 
     // Get all revisions of the current node, in all languages.
     $revision_ids = $node_storage->revisionIds($node);
+    // Creating an array with the keys equal to the value.
+    $revision_ids = array_combine($revision_ids, $revision_ids);
+
+    // Adding a placeholder for the deleted revision, as our custom submit
+    // function is executed after the core delete the current revision.
+    $revision_ids[$currently_deleted_revision_id] = $currently_deleted_revision_id;
 
     $revisions_before = [];
-    if (count($revision_ids) > 0) {
+
+    if (count($revision_ids) > 1) {
+      // Ordering the array.
+      krsort($revision_ids);
+
+      // Getting the prior revisions.
+      $revision_ids = array_slice($revision_ids, array_search($currently_deleted_revision_id, array_keys($revision_ids)) + 1, NULL, TRUE);
+
       // Loop through the list of revision ids, select the ones that have.
       // Same language as the current language AND are older than the current
       // deleted revision.
       foreach ($revision_ids as $vid) {
-        // Compare revision using vid, the newer revision has bigger vid.
-        if ($currently_deleted_revision_id - $vid > 0) {
-          $revision = $node_storage->loadRevision($vid);
-          // Only show revisions that are affected by the language
-          // that is being displayed.
-          if ($revision->hasTranslation($langcode) && $revision->getTranslation($langcode)->isRevisionTranslationAffected()) {
-            array_push($revisions_before, $revision);
-          }
+        $revision = $node_storage->loadRevision($vid);
+        // Only show revisions that are affected by the language
+        // that is being displayed.
+        if ($revision->hasTranslation($langcode) && $revision->getTranslation($langcode)->isRevisionTranslationAffected()) {
+          $revisions_before[] = $revision;
         }
       }
-
-      // Sort revisions by comparing revisionId, newest revision first.
-      usort($revisions_before, function ($rev1, $rev2) {
-        return $rev1->getRevisionId() < $rev2->getRevisionId();
-      });
     }
 
     return $revisions_before;
@@ -278,31 +278,123 @@ class NodeRevisionDelete implements NodeRevisionDeleteInterface {
   /**
    * {@inheritdoc}
    */
-  public function getCandidatesRevisions($content_type, $minimum_revisions_to_keep, $minimum_age_to_delete, $when_to_delete) {
+  public function getCandidatesRevisionsByNumber($number) {
+    // Looking for all the configured content types.
+    $content_types = $this->getConfiguredContentTypes();
+
+    $revisions = [];
+
+    foreach ($content_types as $content_type) {
+      // Getting the revisions.
+      $revisions = array_merge($revisions, $this->getCandidatesRevisions($content_type->id()));
+
+      // Getting the number of revision we will delete.
+      if ($number < count($revisions)) {
+        $revisions = array_slice($revisions, 0, $number, TRUE);
+        break;
+      }
+    }
+    return $revisions;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getCandidatesRevisions($content_type) {
+    // Getting the content type config.
+    $content_type_config = $this->getContentTypeConfigWithRelativeTime($content_type);
+
     // Getting the candidate nodes.
-    $candidate_nodes = $this->getCandidatesNodes($content_type, $minimum_revisions_to_keep, $minimum_age_to_delete, $when_to_delete);
+    $candidate_nodes = $this->getCandidatesNodes($content_type);
 
     $candidate_revisions = [];
 
     foreach ($candidate_nodes as $candidate_node) {
-      $query = $this->connection->select('node', 'n');
-      $query->join('node_revision', 'r', 'r.nid = n.nid');
-      $query->fields('r', ['vid']);
-      $query->fields('n', ['nid']);
-      $query->condition('n.type', $content_type);
-      $query->condition('n.nid', $candidate_node);
-      $query->where('n.vid <> r.vid');
-      $query->groupBy('n.nid');
-      $query->groupBy('r.vid');
-      $query->orderBy('vid', 'ASC');
+      $sub_query = $this->connection->select('node_field_data', 'n');
+      $sub_query->join('node_revision', 'r', 'r.nid = n.nid');
+      $sub_query->fields('r', ['vid', 'revision_timestamp']);
+      $sub_query->condition('type', $content_type);
+      $sub_query->condition('n.nid', $candidate_node);
+      $sub_query->condition('changed', $content_type_config['when_to_delete'], '<');
+      $sub_query->where('n.vid <> r.vid');
+      $sub_query->groupBy('n.nid');
+      $sub_query->groupBy('r.vid');
+      $sub_query->orderBy('revision_timestamp', 'DESC');
       // We need to reduce in 1 because we don't want to count the default vid.
       // We excluded the default revision in the where call.
-      $query->range($minimum_revisions_to_keep - 1, PHP_INT_MAX);
+      $sub_query->range($content_type_config['minimum_revisions_to_keep'] - 1, PHP_INT_MAX);
+
+      $query = $this->connection->select($sub_query, 't');
+      $query->fields('t', ['vid']);
+      $query->condition('revision_timestamp', $content_type_config['minimum_age_to_delete'], '<');
 
       $candidate_revisions = array_merge($candidate_revisions, $query->execute()->fetchCol());
     }
-
     return $candidate_revisions;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getContentTypeConfigWithRelativeTime($content_type) {
+    // Getting the content type config.
+    $content_type_config = $this->getContentTypeConfig($content_type);
+    // Getting the relative time for the minimum_age_to_delete.
+    $content_type_config['minimum_age_to_delete'] = $this->getRelativeTime('minimum_age_to_delete', $content_type_config['minimum_age_to_delete']);
+    // Getting the relative time for the when_to_delete.
+    $content_type_config['when_to_delete'] = $this->getRelativeTime('when_to_delete', $content_type_config['when_to_delete']);
+
+    return $content_type_config;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getContentTypeConfig($content_type) {
+    // Getting the variables with the content types configuration.
+    $third_party_settings = $this->configFactory->get('node.type.' . $content_type)->get('third_party_settings');
+
+    if (isset($third_party_settings['node_revision_delete'])) {
+      return $third_party_settings['node_revision_delete'];
+    }
+
+    return [];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getRelativeTime($variable_type, $number) {
+    // Getting the time interval.
+    $time_interval = $this->configFactory->get($this->configurationFileName)->get('node_revision_delete_' . $variable_type . '_time')['time'];
+    // Getting the relative time.
+    $time = strtotime('-' . $number . ' ' . $time_interval);
+
+    return $time;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getCandidatesNodes($content_type) {
+    // Getting the content type config.
+    $content_type_config = $this->getContentTypeConfigWithRelativeTime($content_type);
+
+    $query = $this->connection->select('node_field_data', 'n');
+    $query->join('node_revision', 'r', 'r.nid = n.nid');
+    $query->fields('n', ['nid']);
+    $query->addExpression('COUNT(*)', 'total');
+    $query->condition('type', $content_type);
+    $query->condition('revision_timestamp', $content_type_config['minimum_age_to_delete'], '<');
+    $query->condition('changed', $content_type_config['when_to_delete'], '<');
+    $query->groupBy('n.nid');
+    $query->having('COUNT(*) > ' . $content_type_config['minimum_revisions_to_keep']);
+
+    // Allow other modules to alter candidates query.
+    $query->addTag('node_revision_delete_candidates');
+    $query->addTag('node_revision_delete_candidates_' . $content_type);
+
+    return $query->execute()->fetchCol();
   }
 
 }

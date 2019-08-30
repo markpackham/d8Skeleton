@@ -11,7 +11,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Link;
 use Drupal\Component\Utility\Xss;
 use Drupal\node\NodeTypeInterface;
-use Drupal\node_revision_delete\NodeRevisionDeleteBatch;
+use Drupal\node_revision_delete\Utility\Batch;
 
 /**
  * Implements hook_help().
@@ -165,8 +165,6 @@ function node_revision_delete_form_node_type_form_alter(&$form, FormStateInterfa
 function node_revision_delete_form_node_type_form_builder($entity_type, NodeTypeInterface $type, array &$form, FormStateInterface $form_state) {
   // Getting the form values.
   $track = $form_state->getValue('node_revision_delete_track');
-  // Getting the content type machine name.
-  $content_type = $form_state->getFormObject()->getEntity()->id();
   // If we will track the content type.
   if ($track) {
     // Saving the values in the config.
@@ -281,24 +279,37 @@ function _node_revision_bulk_delete_submit(array &$form, FormStateInterface $for
     // Get list of revisions older than current revision.
     $revisions_before = \Drupal::service('node_revision_delete')->getPreviousRevisions($nid, $revision_id);
 
-    $operations = [];
-    // Loop through the revisions to delete, create batch operations array.
-    foreach ($revisions_before as $revision) {
-      $operations[] = [
-        [NodeRevisionDeleteBatch::class, 'deleteRevision'],
-        [$revision, FALSE],
-      ];
+    // Add the batch.
+    batch_set(Batch::getRevisionDeletionBatch($revisions_before, FALSE));
+  }
+}
+
+/**
+ * Implements hook_cron().
+ */
+function node_revision_delete_cron() {
+  // Getting the config.
+  $config = \Drupal::config('node_revision_delete.settings');
+  // Getting the frequency to run cron.
+  $period = $config->get('node_revision_delete_time');
+  // Getting the last time cron runs.
+  $cron_last = \Drupal::state()->get('system.cron_last');
+  // Getting the current time.
+  $current_time = \Drupal::time()->getRequestTime();
+
+  if (($period != -1) && ($current_time - $cron_last > $period)) {
+    // Getting the the maximum number of revisions to process.
+    $revisions_to_process = $config->get('node_revision_delete_cron');
+    // Getting the revisions to delete.
+    $revisions = \Drupal::service('node_revision_delete')->getCandidatesRevisionsByNumber($revisions_to_process);
+
+    // Getting the node storage.
+    $node_storage = \Drupal::entityTypeManager()->getStorage('node');
+
+    // Delete the revisions.
+    foreach ($revisions as $revision) {
+      $node_storage->deleteRevision($revision);
     }
-    // Create batch to delete revisions.
-    $batch = [
-      'title' => t('Deleting revisions'),
-      'init_message' => t('Starting to delete revisions.'),
-      'progress_message' => t('Deleted @current out of @total (@percentage%). Estimated time: @estimate.'),
-      'error_message' => t('Error deleting revisions.'),
-      'operations' => $operations,
-      'finished' => [NodeRevisionDeleteBatch::class, 'finish'],
-    ];
-    batch_set($batch);
   }
 
 }

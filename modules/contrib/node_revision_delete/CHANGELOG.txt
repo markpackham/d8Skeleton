@@ -1,3 +1,38 @@
+Node Revision Delete 8.x-1.0-beta2, 2019-08-27
+----------------------------------------------
+Changes since 8.x-1.0-beta1:
+
+- #3077450 by adriancid: Add an option to delete the revisions of a specific
+  content type.
+- #3077419 by adriancid: Create the batch definition in a new utility class.
+- #3077323 by adriancid: Use the getConfiguredContentTypes method in the module
+  configuration form.
+- #3077318 by adriancid: Delete revisions when cron runs.
+- #3077288 by adriancid: Add a method to have the candidates revisions to delete
+  by quantity.
+- #3077255 by adriancid: Add a method in the node_revision_delete service to
+  have all the configured content types.
+- #3076704 by adriancid: Create a method to get the content type config with the
+  relative time.
+- #3076703 by adriancid: Improve the getPreviousRevisions method.
+- #3076673 by adriancid: Simplify the getRelativeTime method in the
+  node_revision_delete service.
+- #3076666 by adriancid: Create a function to return the content type config.
+- #3076653 by adriancid:   The functions identifying candidate revisions should
+  have only as an argument the content type.
+- #3076226 by adriancid: Identify the candidate revisions using the when to
+  delete configuration.
+- #3076228 by adriancid: Identify the candidate nodes using the when to delete
+  configuration.
+- #3076225 by adriancid: Identify the candidate revisions using the minimum age
+  of revisions to delete.
+- #3076558 by adriancid: The newest revisions are deleted and not the oldest.
+- #3076227 by adriancid: Identify the candidate nodes using the minimum age of
+  revisions to delete.
+- #3076477 by adriancid: Create a function to determine the time value.
+- #3076222 by adriancid: Delete revisions only if the run now option is checked
+  in the configuration form.
+
 Node Revision Delete 8.x-1.0-beta1, 2019-08-20
 ----------------------------------------------
 Changes since 8.x-1.0-alpha4:

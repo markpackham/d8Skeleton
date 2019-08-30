@@ -82,6 +82,8 @@ class NodeRevisionDeleteAdminSettingsTest extends BrowserTestBase {
         'node_revision_delete_minimum_age_to_delete_time_time' => 'weeks',
         'node_revision_delete_when_to_delete_time_max_number' => 30,
         'node_revision_delete_when_to_delete_time_time' => 'days',
+        'run_now' => FALSE,
+        'dry_run' => FALSE,
       ],
       [
         'node_revision_delete_cron' => 15,
@@ -90,18 +92,20 @@ class NodeRevisionDeleteAdminSettingsTest extends BrowserTestBase {
         'node_revision_delete_minimum_age_to_delete_time_time' => 'days',
         'node_revision_delete_when_to_delete_time_max_number' => 24,
         'node_revision_delete_when_to_delete_time_time' => 'months',
+        'run_now' => FALSE,
+        'dry_run' => FALSE,
       ],
     ];
 
     foreach ($form_values as $edit) {
       // Sending the form.
       $this->drupalPostForm(NULL, $edit, 'op');
-      // Verifiying the save message.
+      // Verifying the save message.
       $this->assertSession()->pageTextContains('The configuration options have been saved.');
       // Getting the configuration file.
       $config_file = $config_factory->get($this->configurationFileName);
 
-      // Verifiying the config values.
+      // Verifying the config values.
       $this->assertEquals($edit['node_revision_delete_cron'], $config_file->get('node_revision_delete_cron'));
       $this->assertEquals($edit['node_revision_delete_time'], $config_file->get('node_revision_delete_time'));
       $this->assertEquals($edit['node_revision_delete_minimum_age_to_delete_time_max_number'], $config_file->get('node_revision_delete_minimum_age_to_delete_time')['max_number']);

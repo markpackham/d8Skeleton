@@ -87,17 +87,11 @@ interface NodeRevisionDeleteInterface {
    *
    * @param string $content_type
    *   Content type machine name.
-   * @param int $minimum_revisions_to_keep
-   *   Minimum number of revisions to keep.
-   * @param int $minimum_age_to_delete
-   *   Minimum age in months of revision to delete.
-   * @param int $when_to_delete
-   *   Number of inactivity months to wait for delete a revision.
    *
    * @return array
    *   Array of nids.
    */
-  public function getCandidatesNodes($content_type, $minimum_revisions_to_keep, $minimum_age_to_delete, $when_to_delete);
+  public function getCandidatesNodes($content_type);
 
   /**
    * Get all revision that are older than current deleted revision.
@@ -120,16 +114,64 @@ interface NodeRevisionDeleteInterface {
    *
    * @param string $content_type
    *   Content type machine name.
-   * @param int $minimum_revisions_to_keep
-   *   Minimum number of revisions to keep.
-   * @param int $minimum_age_to_delete
-   *   Minimum age in months of revision to delete.
-   * @param int $when_to_delete
-   *   Number of inactivity months to wait for delete a revision.
    *
    * @return array
    *   Array of vids.
    */
-  public function getCandidatesRevisions($content_type, $minimum_revisions_to_keep, $minimum_age_to_delete, $when_to_delete);
+  public function getCandidatesRevisions($content_type);
+
+  /**
+   * Determine the time value for a node type and a variable type.
+   *
+   * @param string $variable_type
+   *   The variable type, can by minimum_age_to_delete or when_to_delete.
+   * @param int $number
+   *   The number representing the variable type.
+   *
+   * @return int
+   *   The timestamp representing the relative time for the node type variable.
+   */
+  public function getRelativeTime($variable_type, $number);
+
+  /**
+   * Return the configuration for a content type.
+   *
+   * @param string $content_type
+   *   Content type machine name.
+   *
+   * @return array
+   *   An array with the configuration for the content type.
+   */
+  public function getContentTypeConfig($content_type);
+
+  /**
+   * Return the configuration for a content type with the relative time.
+   *
+   * @param string $content_type
+   *   Content type machine name.
+   *
+   * @return array
+   *   An array with the configuration for the content type.
+   */
+  public function getContentTypeConfigWithRelativeTime($content_type);
+
+  /**
+   * Get the content types configured for node revision delete.
+   *
+   * @return array
+   *   An array with the configured content types objects.
+   */
+  public function getConfiguredContentTypes();
+
+  /**
+   * Return a number of candidate revisions to be deleted.
+   *
+   * @param string $number
+   *   The number of revisions to return.
+   *
+   * @return array
+   *   Array of vids.
+   */
+  public function getCandidatesRevisionsByNumber($number);
 
 }
