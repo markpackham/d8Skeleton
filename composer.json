@@ -76,7 +76,8 @@
         "drupal/advagg": "^4.0",
         "drupal/coder": "^8.3",
         "drupal/url_embed": "^1.0@alpha",
-        "drupal/quicklink": "^1.2"
+        "drupal/quicklink": "^1.2",
+        "drupal/field_defaults": "^1.1"
     },
     "replace": {
         "drupal/core": "^8.7"
