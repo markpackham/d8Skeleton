@@ -4,7 +4,7 @@ description: Stores geographic and location data (points, lines, and polygons).
 package: Field types
 core: 8.x
 
-# Information added by Drupal.org packaging script on 2019-09-23
-version: '8.x-1.4'
+# Information added by Drupal.org packaging script on 2019-09-25
+version: '8.x-1.6'
 project: 'geofield'
-datestamp: 1569251918
+datestamp: 1569408791
