@@ -2,6 +2,8 @@
 
 namespace Drupal\migrate_tools;
 
+use Drupal\Core\Logger\RfcLogLevel;
+use Drupal\migrate\MigrateMessage;
 use Drupal\migrate\MigrateMessageInterface;
 
 /**
@@ -9,7 +11,7 @@ use Drupal\migrate\MigrateMessageInterface;
  *
  * @package Drupal\migrate_tools
  */
-class DrushLogMigrateMessage implements MigrateMessageInterface {
+class DrushLogMigrateMessage extends MigrateMessage implements MigrateMessageInterface {
 
   /**
    * Output a message from the migration.
@@ -22,6 +24,7 @@ class DrushLogMigrateMessage implements MigrateMessageInterface {
    * @see drush_log()
    */
   public function display($message, $type = 'status') {
+    $type = isset($this->map[$type]) ? $this->map[$type] : RfcLogLevel::NOTICE;
     \Drupal::service(('logger.channel.migrate_tools'))->log($type, $message);
   }
 
