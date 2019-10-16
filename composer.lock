@@ -994,17 +994,17 @@
         },
         {
             "name": "drupal/adminimal_admin_toolbar",
-            "version": "1.9.0",
+            "version": "1.10.0",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/adminimal_admin_toolbar.git",
-                "reference": "8.x-1.9"
+                "reference": "8.x-1.10"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/adminimal_admin_toolbar-8.x-1.9.zip",
-                "reference": "8.x-1.9",
-                "shasum": "d758b5070517b0be5ec71427dd3dbefeacd30a70"
+                "url": "https://ftp.drupal.org/files/projects/adminimal_admin_toolbar-8.x-1.10.zip",
+                "reference": "8.x-1.10",
+                "shasum": "9849f250961c2a03ac9799be8ace7240fa753786"
             },
             "require": {
                 "drupal/admin_toolbar": "*",
@@ -1016,8 +1016,8 @@
                     "dev-1.x": "1.x-dev"
                 },
                 "drupal": {
-                    "version": "8.x-1.9",
-                    "datestamp": "1548270780",
+                    "version": "8.x-1.10",
+                    "datestamp": "1571249584",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"
