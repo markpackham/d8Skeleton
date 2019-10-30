@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\node_revision_delete\Unit;
 
+use Drupal\node_revision_delete\NodeRevisionDeleteBatch;
 use Drupal\Tests\UnitTestCase;
 use Drupal\node_revision_delete\NodeRevisionDelete;
 use Drupal\Tests\node_revision_delete\Traits\NodeRevisionDeleteTestTrait;
@@ -129,7 +130,7 @@ class NodeRevisionDeleteTest extends UnitTestCase {
    *   - 'config_name' - The config name.
    *   - 'max_number' - The number for the $config_name parameter configuration.
    *
-   * @see testUpdateTimeMaxNumberConfig()
+   * @see testGetTimeString()
    */
   public function providerGetTimeString() {
 
@@ -194,7 +195,7 @@ class NodeRevisionDeleteTest extends UnitTestCase {
    * @dataProvider providerGetTimeValues
    */
   public function testGetTimeValues($expected, $index) {
-    // Testing the function.
+    // Testing the method.
     $this->assertEquals($expected, $this->nodeRevisionDelete->getTimeValues($index));
   }
 
@@ -255,7 +256,7 @@ class NodeRevisionDeleteTest extends UnitTestCase {
    * @dataProvider providerGetTimeNumberString
    */
   public function testGetTimeNumberString($expected, $number, $time) {
-    // Testing the function.
+    // Testing the method.
     $this->assertEquals($expected, $this->nodeRevisionDelete->getTimeNumberString($number, $time));
   }
 
@@ -283,6 +284,176 @@ class NodeRevisionDeleteTest extends UnitTestCase {
     $tests['month singular'] = ['month', 1, 'months'];
     $tests['month plural 1'] = ['months', 2, 'months'];
     $tests['month plural 2'] = ['months', 10, 'months'];
+
+    return $tests;
+  }
+
+  /**
+   * Tests the getRevisionDeletionBatch() method.
+   *
+   * @param array $expected
+   *   The expected result from calling the function.
+   * @param array $revisions
+   *   The revisions array.
+   * @param bool $dry_run
+   *   The dry run option.
+   *
+   * @covers ::getRevisionDeletionBatch
+   * @dataProvider providerGetRevisionDeletionBatch
+   */
+  public function testGetRevisionDeletionBatch(array $expected, array $revisions, $dry_run) {
+    // Testing the method.
+    $this->assertEquals($expected, $this->nodeRevisionDelete->getRevisionDeletionBatch($revisions, $dry_run));
+  }
+
+  /**
+   * Data provider for testGetRevisionDeletionBatch().
+   *
+   * @return array
+   *   An array of arrays, each containing:
+   *   - 'expected' - Expected return from ::getRevisionDeletionBatch().
+   *   - 'revisions' - An array of revisions.
+   *   - 'dry_run' - An option to know if we should delete or not the revisions.
+   *
+   * @see getRevisionDeletionBatch()
+   */
+  public function providerGetRevisionDeletionBatch() {
+    // Sets of revisions.
+    $revision_sets = [
+      [],
+      [12],
+      [32, 4],
+      [45, 23, 72],
+      [76, 97, 34, 53],
+    ];
+    // Set for the dry run option.
+    $dry_run_set = [
+      TRUE,
+      TRUE,
+      TRUE,
+      FALSE,
+      FALSE,
+    ];
+
+    // The batch.
+    $batch_template = [
+      'title' => $this->getStringTranslationStub()->translate('Deleting revisions'),
+      'init_message' => $this->getStringTranslationStub()->translate('Starting to delete revisions.'),
+      'progress_message' => $this->getStringTranslationStub()->translate('Deleted @current out of @total (@percentage%). Estimated time: @estimate.'),
+      'error_message' => $this->getStringTranslationStub()->translate('Error deleting revisions.'),
+      'operations' => [],
+      'finished' => [NodeRevisionDeleteBatch::class, 'finish'],
+    ];
+
+    $expected = [];
+
+    // Creating the expected arrays.
+    foreach ($revision_sets as $set => $revisions) {
+      $operations[$set] = [];
+
+      $expected[$set] = $batch_template;
+
+      foreach ($revisions as $revision) {
+        $expected[$set]['operations'][] = [
+          [NodeRevisionDeleteBatch::class, 'deleteRevision'],
+          [$revision, $dry_run_set[$set]],
+        ];
+      }
+    }
+
+    $tests[] = [$expected[0], $revision_sets[0], $dry_run_set[0]];
+    $tests[] = [$expected[1], $revision_sets[1], $dry_run_set[1]];
+    $tests[] = [$expected[2], $revision_sets[2], $dry_run_set[2]];
+    $tests[] = [$expected[3], $revision_sets[3], $dry_run_set[3]];
+    $tests[] = [$expected[4], $revision_sets[4], $dry_run_set[4]];
+
+    return $tests;
+  }
+
+  /**
+   * Tests the getRelativeTime() method.
+   *
+   * @param string $expected
+   *   The expected result from calling the function.
+   * @param array $time
+   *   The configured time name.
+   * @param string $config_name
+   *   The config name.
+   * @param int $number
+   *   The number for the $config_name parameter configuration.
+   *
+   * @covers ::getRelativeTime
+   * @dataProvider providerGetRelativeTime
+   */
+  public function testGetRelativeTime($expected, array $time, $config_name, $number) {
+    // ImmutableConfig mock.
+    $config = $this->createMock('Drupal\Core\Config\ImmutableConfig');
+    // ImmutableConfig::get mock.
+    $config->expects($this->any())
+      ->method('get')
+      ->with('node_revision_delete_' . $config_name . '_time')
+      ->willReturn($time);
+
+    // Mocking getEditable method.
+    $this->configFactory->expects($this->any())
+      ->method('get')
+      ->with($this->configFile)
+      ->willReturn($config);
+
+    // Asserting the values.
+    $this->assertEquals($expected, $this->nodeRevisionDelete->getRelativeTime($config_name, $number));
+  }
+
+  /**
+   * Data provider for testGetRelativeTime.
+   *
+   * @return array
+   *   An array of arrays, each containing:
+   *   - 'expected' - Expected return from getRelativeTime().
+   *   - 'time' - The configured time.
+   *   - 'config_name' - The config name.
+   *   - 'number' - The number for the $config_name parameter configuration.
+   *
+   * @see testGetRelativeTime()
+   */
+  public function providerGetRelativeTime() {
+
+    $expected = [
+      strtotime('-5 days'),
+      strtotime('-2 days'),
+      strtotime('-1 day'),
+      strtotime('-10 weeks'),
+      strtotime('-20 weeks'),
+      strtotime('-1 week'),
+      strtotime('-12 months'),
+      strtotime('-24 months'),
+      strtotime('-1 month'),
+    ];
+
+    $days = ['time' => 'days'];
+    $weeks = ['time' => 'weeks'];
+    $months = ['time' => 'months'];
+
+    // Test for minimum_age_to_delete.
+    $tests['days 1'] = [$expected[0], $days, 'minimum_age_to_delete', 5];
+    $tests['days 2'] = [$expected[1], $days, 'minimum_age_to_delete', 2];
+    $tests['days 3'] = [$expected[2], $days, 'minimum_age_to_delete', 1];
+    $tests['weeks 1'] = [$expected[3], $weeks, 'minimum_age_to_delete', 10];
+    $tests['weeks 2'] = [$expected[4], $weeks, 'minimum_age_to_delete', 20];
+    $tests['weeks 3'] = [$expected[5], $weeks, 'minimum_age_to_delete', 1];
+    $tests['months 1'] = [$expected[6], $months, 'minimum_age_to_delete', 12];
+    $tests['months 2'] = [$expected[7], $months, 'minimum_age_to_delete', 24];
+    $tests['months 3'] = [$expected[8], $months, 'minimum_age_to_delete', 1];
+    // Test for when_to_delete.
+    $tests['days 4'] = [$expected[0], $days, 'when_to_delete', 5];
+    $tests['days 5'] = [$expected[1], $days, 'when_to_delete', 2];
+    $tests['days 6'] = [$expected[2], $days, 'when_to_delete', 1];
+    $tests['weeks 4'] = [$expected[3], $weeks, 'when_to_delete', 10];
+    $tests['weeks 5'] = [$expected[4], $weeks, 'when_to_delete', 20];
+    $tests['weeks 6'] = [$expected[5], $weeks, 'when_to_delete', 1];
+    $tests['months 4'] = [$expected[6], $months, 'when_to_delete', 12];
+    $tests['months 5'] = [$expected[7], $months, 'when_to_delete', 24];
+    $tests['months 6'] = [$expected[8], $months, 'when_to_delete', 1];
 
     return $tests;
   }

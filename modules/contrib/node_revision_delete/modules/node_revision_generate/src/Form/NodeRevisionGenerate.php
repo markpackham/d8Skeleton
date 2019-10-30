@@ -149,10 +149,7 @@ class NodeRevisionGenerate extends FormBase {
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
     // Get selected content types.
-    $bundles = array_filter($form_state->getValue('bundles'),
-      function ($bundles_selected) {
-        return $bundles_selected !== 0;
-      });
+    $bundles = array_filter($form_state->getValue('bundles'));
 
     // Get form values.
     $revisions_number = $form_state->getValue('revisions_number');

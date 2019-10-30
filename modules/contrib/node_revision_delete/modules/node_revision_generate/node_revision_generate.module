@@ -17,7 +17,7 @@ function node_revision_generate_help($route_name, RouteMatchInterface $route_mat
     case 'help.page.node_revision_generate':
       $output = '';
       $output .= '<h3>' . t('About') . '</h3>';
-      $output .= '<p>' . t('The Node Revision Generate module allow you to generate node revisions. This module is for test purpose.') . '</p>';
+      $output .= '<p>' . t('The Node Revision Generate module allows you to generate node revisions. This module is for testing.') . '</p>';
       $output .= '<h3>' . t('Uses') . '</h3>';
       $output .= '<dl>';
       $output .= '<dt>' . t('Generating revisions') . '</dt>';

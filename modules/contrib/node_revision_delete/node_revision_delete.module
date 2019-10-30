@@ -11,7 +11,6 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Link;
 use Drupal\Component\Utility\Xss;
 use Drupal\node\NodeTypeInterface;
-use Drupal\node_revision_delete\Utility\Batch;
 
 /**
  * Implements hook_help().
@@ -38,7 +37,7 @@ function node_revision_delete_help($route_name, RouteMatchInterface $route_match
       $output = '';
       $output .= '<p>' . t("To allow Node Revision Delete to act upon a certain content type, you should navigate to the desired content type's edit page via:") . '</p>';
       $output .= '<p><em>' . t('Administration » Structure » Content types » [Content type name]') . '</em></p>';
-      $output .= '<p>' . t("Under the Publishing Options tab, enable 'Create new revision' and 'Limit the amount of revisions for this content type' checkboxes. Change the Maximum number of revisions to keep, if you need to, and finally, save your changes clicking in the Save content type button.") . '</p>';
+      $output .= '<p>' . t("Under the Publishing Options tab, enable the 'Create new revision' and 'Limit the amount of revisions for this content type' checkboxes. Change the Maximum number of revisions to keep, if you need to, and finally, save your changes clicking in the Save content type button.") . '</p>';
 
       return $output;
   }
@@ -76,7 +75,7 @@ function node_revision_delete_form_node_type_form_alter(&$form, FormStateInterfa
   // Element to track the content type.
   $form['workflow']['section']['node_revision_delete_track'] = [
     '#type' => 'checkbox',
-    '#title' => t('Limit the amount of revisions for this content type'),
+    '#title' => t('Limit the number of revisions for this content type'),
     '#default_value' => $track,
     '#attached' => [
       'library' => [
@@ -89,7 +88,7 @@ function node_revision_delete_form_node_type_form_alter(&$form, FormStateInterfa
   $form['workflow']['section']['minimum_revisions_to_keep'] = [
     '#type' => 'number',
     '#title' => t('Minimum number of revisions to keep'),
-    '#description' => t('Oldest revisions will be deleted when the total amount surpases this value. Set it to 1 to remove all revisions (except the current revision).'),
+    '#description' => t('The oldest revisions will be deleted when the total amount surpasses this value. Set it to 1 to remove all revisions (except the current revision).'),
     '#default_value' => $minimum_revisions_to_keep,
     '#min' => 1,
     '#states' => [
@@ -111,7 +110,7 @@ function node_revision_delete_form_node_type_form_alter(&$form, FormStateInterfa
   $form['workflow']['section']['minimum_age_to_delete'] = [
     '#type' => 'select',
     '#title' => t('Minimum age of revisions to delete'),
-    '#description' => t('Revisions older of this age will be deleted, but just only after the "Minimum number of revisions to keep" will be reached. If you don\'t want to take in count the age of the revisions, set to "None".'),
+    '#description' => t('Revisions older than this age will be deleted, but only after the "Minimum number of revisions to keep" has been reached. If you are not concerned with the age of the revisions, set to "None".'),
     '#options' => $options_minimum_age_to_delete,
     '#size' => 1,
     '#default_value' => $minimum_age_to_delete,
@@ -135,7 +134,7 @@ function node_revision_delete_form_node_type_form_alter(&$form, FormStateInterfa
   $form['workflow']['section']['when_to_delete'] = [
     '#type' => 'select',
     '#title' => t('When to delete'),
-    '#description' => t('If the current revision is not older than specified here, its older revisions will not be deleted, even if they are old enough. If set to "Always", older revisions will be deleted regardless of the age of the current revision.'),
+    '#description' => t('If the current revision is not older than this, its older revisions will not be deleted, even if they are old enough. If set to "Always", older revisions will be deleted regardless of the age of the current revision.'),
     '#options' => $options_when_to_delete,
     '#size' => 1,
     '#default_value' => $when_to_delete,
@@ -210,7 +209,7 @@ function node_revision_delete_form_node_revision_delete_confirm_alter(&$form, Fo
 
     $headers = [
       [
-        'data' => t('Revisions'),
+        'data' => t('Revision'),
         // Hide the description on narrow width devices.
         'class' => [RESPONSIVE_PRIORITY_MEDIUM],
       ],
@@ -280,7 +279,7 @@ function _node_revision_bulk_delete_submit(array &$form, FormStateInterface $for
     $revisions_before = \Drupal::service('node_revision_delete')->getPreviousRevisions($nid, $revision_id);
 
     // Add the batch.
-    batch_set(Batch::getRevisionDeletionBatch($revisions_before, FALSE));
+    batch_set(\Drupal::service('node_revision_delete')->getRevisionDeletionBatch($revisions_before, FALSE));
   }
 }
 
@@ -302,13 +301,18 @@ function node_revision_delete_cron() {
     $revisions_to_process = $config->get('node_revision_delete_cron');
     // Getting the revisions to delete.
     $revisions = \Drupal::service('node_revision_delete')->getCandidatesRevisionsByNumber($revisions_to_process);
+    // Checking if we have revisions to delete.
+    if (count($revisions)) {
+      // Getting the node storage.
+      $node_storage = \Drupal::entityTypeManager()->getStorage('node');
 
-    // Getting the node storage.
-    $node_storage = \Drupal::entityTypeManager()->getStorage('node');
-
-    // Delete the revisions.
-    foreach ($revisions as $revision) {
-      $node_storage->deleteRevision($revision);
+      // Delete the revisions.
+      foreach ($revisions as $revision) {
+        $node_storage->deleteRevision($revision);
+      }
+      // The node_revision_delete.last_execute state variable stores the last
+      // time a revision was deleted once cron run.
+      \Drupal::state()->set('node_revision_delete.last_execute', REQUEST_TIME);
     }
   }
 

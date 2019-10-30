@@ -10,9 +10,9 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\node_revision_delete\NodeRevisionDeleteInterface;
 
 /**
- * Provides a content type revision deletion confirmation form.
+ * Provides a candidate node revision deletion confirmation form.
  */
-class ContentTypeRevisionsDeleteForm extends ConfirmFormBase {
+class CandidateNodesRevisionsDeleteForm extends ConfirmFormBase {
 
   /**
    * The entity type manager service.
@@ -22,11 +22,11 @@ class ContentTypeRevisionsDeleteForm extends ConfirmFormBase {
   protected $entityTypeManager;
 
   /**
-   * The content type name.
+   * The node object.
    *
-   * @var string
+   * @var \Drupal\node\Entity\Node
    */
-  protected $contentType;
+  protected $node;
 
   /**
    * The node revision delete interface.
@@ -68,8 +68,8 @@ class ContentTypeRevisionsDeleteForm extends ConfirmFormBase {
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, $content_type = NULL) {
-    $this->contentType = $this->entityTypeManager->getStorage('node_type')->load($content_type);
+  public function buildForm(array $form, FormStateInterface $form_state, $content_type = NULL, $nid = NULL) {
+    $this->node = $this->entityTypeManager->getStorage('node')->load($nid);
     return parent::buildForm($form, $form_state);
   }
 
@@ -77,7 +77,7 @@ class ContentTypeRevisionsDeleteForm extends ConfirmFormBase {
    * {@inheritdoc}
    */
   public function getQuestion() {
-    return $this->t('Are you sure you want to delete the candidates revisions for the "%content_type" content type?', ['%content_type' => $this->contentType->label()]);
+    return $this->t('Are you sure you want to delete the candidates revisions for the node "%node_title" ?', ['%node_title' => $this->node->getTitle()]);
   }
 
   /**
@@ -91,7 +91,7 @@ class ContentTypeRevisionsDeleteForm extends ConfirmFormBase {
    * {@inheritdoc}
    */
   public function getDescription() {
-    $description = '<p>' . $this->t('This action will delete the candidate revisions for the "@content_type" content type.', ['@content_type' => $this->contentType->label()]) . '</p>';
+    $description = '<p>' . $this->t('This action will delete the candidate revisions for the "@node_title" content type.', ['@node_title' => $this->node->getTitle()]) . '</p>';
     $description .= '<p>' . parent::getDescription() . '</p>';
     return $description;
   }
@@ -107,7 +107,7 @@ class ContentTypeRevisionsDeleteForm extends ConfirmFormBase {
    * {@inheritdoc}
    */
   public function getCancelUrl() {
-    return new Url('node_revision_delete.admin_settings');
+    return new Url('node_revision_delete.candidate_nodes', ['content_type' => $this->node->getType()]);
   }
 
   /**
@@ -115,7 +115,7 @@ class ContentTypeRevisionsDeleteForm extends ConfirmFormBase {
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
     // Getting the content type candidate revisions.
-    $candidate_revisions = $this->nodeRevisionDelete->getCandidatesRevisions($this->contentType->id());
+    $candidate_revisions = $this->nodeRevisionDelete->getCandidatesRevisionsByNids([$this->node->id()]);
 
     // Add the batch.
     batch_set($this->nodeRevisionDelete->getRevisionDeletionBatch($candidate_revisions, FALSE));

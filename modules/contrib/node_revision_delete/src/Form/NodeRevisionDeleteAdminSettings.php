@@ -6,10 +6,10 @@ use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Url;
+use Drupal\Core\Link;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\node_revision_delete\NodeRevisionDeleteInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
-use Drupal\node_revision_delete\Utility\Batch;
 
 /**
  * Class NodeRevisionDeleteAdminSettings.
@@ -155,9 +155,11 @@ class NodeRevisionDeleteAdminSettings extends ConfigFormBase {
         if ($candidate_revisions > 0) {
           // Action to delete revisions.
           $dropbutton['#links']['delete_revision'] = [
-            'title' => $this->t('Delete Revisions'),
+            'title' => $this->t('Delete revisions'),
             'url' => Url::fromRoute('node_revision_delete.content_type_revisions_delete_confirm', $route_parameters),
           ];
+          // Creating a link to the candidate nodes page.
+          $candidate_nodes = Link::createFromRoute($candidate_nodes, 'node_revision_delete.candidate_nodes', $route_parameters);
         }
 
         // Action to delete the configuration for the content type.
@@ -224,7 +226,7 @@ class NodeRevisionDeleteAdminSettings extends ConfigFormBase {
     $options_node_revision_delete_time = $this->nodeRevisionDelete->getTimeValues();
     $form['node_revision_delete_time'] = [
       '#type' => 'select',
-      '#title' => $this->t('How often should revision be deleted while cron runs?'),
+      '#title' => $this->t('How often should revisions be deleted when cron runs?'),
       '#description' => $this->t('Frequency of the scheduled mass revision deletion.'),
       '#options' => $options_node_revision_delete_time,
       '#default_value' => $config->get('node_revision_delete_time'),
@@ -289,7 +291,7 @@ class NodeRevisionDeleteAdminSettings extends ConfigFormBase {
     }
     else {
       $disabled = TRUE;
-      $description = $this->t('There not exists candidates nodes with revisions to delete.');
+      $description = $this->t('There are no candidate nodes with revisions to delete.');
     }
 
     $form['run_now'] = [
@@ -302,7 +304,7 @@ class NodeRevisionDeleteAdminSettings extends ConfigFormBase {
     $form['dry_run'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Dry run'),
-      '#description' => $this->t('Test run without deleting revisions but seeing the output results.'),
+      '#description' => $this->t('Test run without deleting revisions but showing the output results.'),
       '#states' => [
         // Hide the dry run option when the run now checkbox is disabled.
         'visible' => [
@@ -363,7 +365,7 @@ class NodeRevisionDeleteAdminSettings extends ConfigFormBase {
         $candidate_revisions = array_merge($candidate_revisions, $this->nodeRevisionDelete->getCandidatesRevisions($content_type->id()));
       }
       // Add the batch.
-      batch_set(Batch::getRevisionDeletionBatch($candidate_revisions, $dry_run));
+      batch_set($this->nodeRevisionDelete->getRevisionDeletionBatch($candidate_revisions, $dry_run));
     }
   }
 

@@ -22,9 +22,9 @@ class ContentTypeConfigurationDeleteForm extends ConfirmFormBase {
   protected $entityTypeManager;
 
   /**
-   * The content type name.
+   * The content type object.
    *
-   * @var string
+   * @var \Drupal\node\Entity\NodeType
    */
   protected $contentType;
 

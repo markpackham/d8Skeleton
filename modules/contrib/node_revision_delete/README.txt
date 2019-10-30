@@ -33,7 +33,7 @@ RECOMMENDED MODULES
 -------------------
 
  * Drush Help (https://www.drupal.org/project/drush_help):
-   Improves the module help page showing information about the module drush
+   Improves the module help page showing information about the module's Drush
    commands.
 
 
@@ -51,23 +51,23 @@ CONFIGURATION
  * Configure the module in Administration » Configuration »
    Content authoring » Node Revision Delete:
 
-   - You can set how many revisions do you want to delete per cron run and
-     how often should revision be deleted while cron runs. You you can save
-     the configurations and optionally start a batch job to delete old revisions
+   - You can set how many revisions you want to delete per cron run and
+     how often should revisions be deleted when cron runs. You can save
+     the configuration and optionally start a batch job to delete old revisions
      for tracked content types. For this you need the
      'Administer Node Revision Delete' permission.
 
  * Configure each content type in Administration » Structure » Content types »
    Content type name:
 
-   - Under the Publishing options tab, mark "Limit the amount of revisions for
+   - Under the Publishing options tab, mark "Limit the number of revisions for
      this content type" and set the maximum number of revisions to keep.
 
  * Drush commands
 
    - drush nrd-delete-cron-run
 
-     Configures how many revisions delete per cron run.
+     Configures how many revisions to delete per cron run.
 
    - drush nrd-last-execute
 
@@ -75,12 +75,11 @@ CONFIGURATION
 
    - drush nrd-set-time
 
-     Configures the frequency with which to delete revisions while cron is
-     running.
+     Configures the frequency with which to delete revisions when cron runs.
 
    - drush nrd-get-time
 
-     Shows the frequency with which to delete revisions while cron is running.
+     Shows the frequency with which to delete revisions when cron runs.
 
    - drush nrd-when-to-delete-time
 
@@ -89,7 +88,7 @@ CONFIGURATION
 
    - drush nrd-minimum-age-to-delete-time
 
-     Configures time options to know the minimum age that the revision must have
+     Configures time options for the minimum age that the revision must be
      to be deleted.
 
    - drush nrd-delete-prior-revisions
@@ -100,11 +99,11 @@ CONFIGURATION
 FAQ
 ---
 
-Q: How can I delete the prior revisions?
+Q: How can I delete prior revisions?
 
 A: When you are deleting a revision of a node, a new checkbox will appear in a
    fieldset saying: "Also delete X revisions prior to this one."; if you check
-   it, all the prior revisions will be deleted as well for the given node.
+   it, all prior revisions will be deleted as well for the given node.
    If you are deleting the oldest revision, the checkbox will not appear as no
    prior revisions are available.
 

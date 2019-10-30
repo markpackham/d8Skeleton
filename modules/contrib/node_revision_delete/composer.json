@@ -30,6 +30,14 @@
     "source": "http://cgit.drupalcode.org/node_revision_delete"
   },
   "require": {
-    "drupal/core": "~8.5"
+    "drupal/core": "~8.5",
+    "php": ">=5.6.0"
+  },
+  "extra": {
+    "drush": {
+      "services": {
+        "drush.services.yml": "^9"
+      }
+    }
   }
 }

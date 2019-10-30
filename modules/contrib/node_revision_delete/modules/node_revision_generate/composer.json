@@ -1,6 +1,6 @@
 {
   "name": "drupal/node_revision_generate",
-  "description": "Generates node revisions. This module is for test purpose.",
+  "description": "Generates node revisions. This module is for testing.",
   "type": "drupal-module",
   "keywords": ["Drupal", "Nodes", "Revisions"],
   "homepage": "https://www.drupal.org/project/node_revision_delete",

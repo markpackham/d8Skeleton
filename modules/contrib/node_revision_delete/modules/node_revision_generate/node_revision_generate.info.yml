@@ -1,5 +1,5 @@
 name: Node Revision Generate
-description: Generates node revisions. This module is for test purpose.
+description: Generates node revisions. This module is for testing.
 package: Content
 
 type: module
@@ -8,7 +8,7 @@ core: 8.x
 dependencies:
   - drupal:node
 
-# Information added by Drupal.org packaging script on 2019-08-27
-version: '8.x-1.0-beta2'
+# Information added by Drupal.org packaging script on 2019-10-29
+version: '8.x-1.0-beta3'
 project: 'node_revision_delete'
-datestamp: 1566920000
+datestamp: 1572374886

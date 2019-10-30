@@ -313,7 +313,6 @@ class NodeRevisionDelete implements NodeRevisionDeleteInterface {
       $sub_query = $this->connection->select('node_field_data', 'n');
       $sub_query->join('node_revision', 'r', 'r.nid = n.nid');
       $sub_query->fields('r', ['vid', 'revision_timestamp']);
-      $sub_query->condition('type', $content_type);
       $sub_query->condition('n.nid', $candidate_node);
       $sub_query->condition('changed', $content_type_config['when_to_delete'], '<');
       $sub_query->where('n.vid <> r.vid');
@@ -330,6 +329,44 @@ class NodeRevisionDelete implements NodeRevisionDeleteInterface {
 
       $candidate_revisions = array_merge($candidate_revisions, $query->execute()->fetchCol());
     }
+    return $candidate_revisions;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getCandidatesRevisionsByNids(array $nids) {
+    $candidate_revisions = [];
+    // If we don't have nids returning an empty array.
+    if (empty($nids)) {
+      return $candidate_revisions;
+    }
+    // As all the nids must be of the same content type we just need to load
+    // one.
+    $node = $this->entityTypeManager->getStorage('node')->load(current($nids));
+
+    // Getting the content type config.
+    $content_type_config = $this->getContentTypeConfigWithRelativeTime($node->getType());
+
+    $sub_query = $this->connection->select('node_field_data', 'n');
+    $sub_query->join('node_revision', 'r', 'r.nid = n.nid');
+    $sub_query->fields('r', ['vid', 'revision_timestamp']);
+    $sub_query->condition('n.nid', $nids, 'IN');
+    $sub_query->condition('changed', $content_type_config['when_to_delete'], '<');
+    $sub_query->where('n.vid <> r.vid');
+    $sub_query->groupBy('n.nid');
+    $sub_query->groupBy('r.vid');
+    $sub_query->orderBy('revision_timestamp', 'DESC');
+    // We need to reduce in 1 because we don't want to count the default vid.
+    // We excluded the default revision in the where call.
+    $sub_query->range($content_type_config['minimum_revisions_to_keep'] - 1, PHP_INT_MAX);
+
+    $query = $this->connection->select($sub_query, 't');
+    $query->fields('t', ['vid']);
+    $query->condition('revision_timestamp', $content_type_config['minimum_age_to_delete'], '<');
+
+    $candidate_revisions = array_merge($candidate_revisions, $query->execute()->fetchCol());
+
     return $candidate_revisions;
   }
 
@@ -364,9 +401,9 @@ class NodeRevisionDelete implements NodeRevisionDeleteInterface {
   /**
    * {@inheritdoc}
    */
-  public function getRelativeTime($variable_type, $number) {
+  public function getRelativeTime($config_name, $number) {
     // Getting the time interval.
-    $time_interval = $this->configFactory->get($this->configurationFileName)->get('node_revision_delete_' . $variable_type . '_time')['time'];
+    $time_interval = $this->configFactory->get($this->configurationFileName)->get('node_revision_delete_' . $config_name . '_time')['time'];
     // Getting the relative time.
     $time = strtotime('-' . $number . ' ' . $time_interval);
 
@@ -395,6 +432,32 @@ class NodeRevisionDelete implements NodeRevisionDeleteInterface {
     $query->addTag('node_revision_delete_candidates_' . $content_type);
 
     return $query->execute()->fetchCol();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getRevisionDeletionBatch(array $revisions, $dry_run) {
+    $operations = [];
+    // Loop through the revisions to delete, create batch operations array.
+    foreach ($revisions as $revision) {
+      $operations[] = [
+        [NodeRevisionDeleteBatch::class, 'deleteRevision'],
+        [$revision, $dry_run],
+      ];
+    }
+
+    // Create batch to delete revisions.
+    $batch = [
+      'title' => $this->t('Deleting revisions'),
+      'init_message' => $this->t('Starting to delete revisions.'),
+      'progress_message' => $this->t('Deleted @current out of @total (@percentage%). Estimated time: @estimate.'),
+      'error_message' => $this->t('Error deleting revisions.'),
+      'operations' => $operations,
+      'finished' => [NodeRevisionDeleteBatch::class, 'finish'],
+    ];
+
+    return $batch;
   }
 
 }

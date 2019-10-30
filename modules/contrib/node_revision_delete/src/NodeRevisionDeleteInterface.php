@@ -64,7 +64,7 @@ interface NodeRevisionDeleteInterface {
    * @param string $index
    *   The index to retrieve.
    *
-   * @return string
+   * @return string|array
    *   The index value (human readable value).
    */
   public function getTimeValues($index = NULL);
@@ -123,15 +123,15 @@ interface NodeRevisionDeleteInterface {
   /**
    * Determine the time value for a node type and a variable type.
    *
-   * @param string $variable_type
-   *   The variable type, can by minimum_age_to_delete or when_to_delete.
+   * @param string $config_name
+   *   The config name, can by minimum_age_to_delete or when_to_delete.
    * @param int $number
    *   The number representing the variable type.
    *
    * @return int
    *   The timestamp representing the relative time for the node type variable.
    */
-  public function getRelativeTime($variable_type, $number);
+  public function getRelativeTime($config_name, $number);
 
   /**
    * Return the configuration for a content type.
@@ -173,5 +173,31 @@ interface NodeRevisionDeleteInterface {
    *   Array of vids.
    */
   public function getCandidatesRevisionsByNumber($number);
+
+  /**
+   * Return the revision deletion batch definition.
+   *
+   * @param array $revisions
+   *   The revisions array.
+   * @param bool $dry_run
+   *   The dry run option.
+   *
+   * @return array
+   *   The batch definition.
+   */
+  public function getRevisionDeletionBatch(array $revisions, $dry_run);
+
+  /**
+   * Return the candidate revisions to be deleted if a group of nids.
+   *
+   * All the nids must be of the same content type.
+   *
+   * @param array $nids
+   *   The nids.
+   *
+   * @return array
+   *   Array of vids.
+   */
+  public function getCandidatesRevisionsByNids(array $nids);
 
 }
