@@ -8,7 +8,6 @@
         "wikimedia/composer-merge-plugin": "^1.4",
         "drupal/address": "^1.6",
         "drupal/addtoany": "^1.12",
-        "drupal/admin_toolbar": "^1.26",
         "drupal/adminimal_admin_toolbar": "^1.9",
         "drupal/back_to_top": "^1.0",
         "drupal/backup_migrate": "^4.0",
@@ -77,7 +76,8 @@
         "drupal/coder": "^8.3",
         "drupal/url_embed": "^1.0@alpha",
         "drupal/quicklink": "^1.2",
-        "drupal/field_defaults": "^1.1"
+        "drupal/field_defaults": "^1.1",
+        "drupal/admin_toolbar": "^2.0"
     },
     "replace": {
         "drupal/core": "^8.7"
