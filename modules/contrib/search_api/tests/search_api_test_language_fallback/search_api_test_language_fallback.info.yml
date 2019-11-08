@@ -1,9 +1,7 @@
-name: 'Search API Hooks Test'
 type: module
-description: 'Support module for Search API tests, tests all the hooks.'
-package: Testing
-dependencies:
-  - search_api:search_api
+name: 'Language Fallback Test'
+description: 'Provides a language fallback fr => es.'
+package: 'Search API'
 core: 8.x
 hidden: true
 
