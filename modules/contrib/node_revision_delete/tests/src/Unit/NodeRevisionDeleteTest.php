@@ -349,8 +349,6 @@ class NodeRevisionDeleteTest extends UnitTestCase {
 
     // Creating the expected arrays.
     foreach ($revision_sets as $set => $revisions) {
-      $operations[$set] = [];
-
       $expected[$set] = $batch_template;
 
       foreach ($revisions as $revision) {

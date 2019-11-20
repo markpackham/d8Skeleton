@@ -6,8 +6,8 @@ use Drupal\Core\Form\ConfirmFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Url;
-use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\node_revision_delete\NodeRevisionDeleteInterface;
+use Drupal\node\NodeTypeInterface;
 
 /**
  * Provides a content type revision deletion confirmation form.
@@ -15,21 +15,14 @@ use Drupal\node_revision_delete\NodeRevisionDeleteInterface;
 class ContentTypeRevisionsDeleteForm extends ConfirmFormBase {
 
   /**
-   * The entity type manager service.
+   * The node type object.
    *
-   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
-   */
-  protected $entityTypeManager;
-
-  /**
-   * The content type name.
-   *
-   * @var string
+   * @var \Drupal\node\NodeTypeInterface
    */
   protected $contentType;
 
   /**
-   * The node revision delete interface.
+   * The node revision delete.
    *
    * @var \Drupal\node_revision_delete\NodeRevisionDeleteInterface
    */
@@ -38,13 +31,10 @@ class ContentTypeRevisionsDeleteForm extends ConfirmFormBase {
   /**
    * Constructor.
    *
-   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
-   *   The entity type manager.
    * @param \Drupal\node_revision_delete\NodeRevisionDeleteInterface $node_revision_delete
    *   The node revision delete.
    */
-  public function __construct(EntityTypeManagerInterface $entity_type_manager, NodeRevisionDeleteInterface $node_revision_delete) {
-    $this->entityTypeManager = $entity_type_manager;
+  public function __construct(NodeRevisionDeleteInterface $node_revision_delete) {
     $this->nodeRevisionDelete = $node_revision_delete;
   }
 
@@ -53,7 +43,6 @@ class ContentTypeRevisionsDeleteForm extends ConfirmFormBase {
    */
   public static function create(ContainerInterface $container) {
     return new static(
-      $container->get('entity_type.manager'),
       $container->get('node_revision_delete')
     );
   }
@@ -62,14 +51,14 @@ class ContentTypeRevisionsDeleteForm extends ConfirmFormBase {
    * {@inheritdoc}
    */
   public function getFormId() {
-    return 'content_type_revisions_delete_confirm_form';
+    return 'node_revision_delete.content_type_revisions_delete';
   }
 
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, $content_type = NULL) {
-    $this->contentType = $this->entityTypeManager->getStorage('node_type')->load($content_type);
+  public function buildForm(array $form, FormStateInterface $form_state, NodeTypeInterface $node_type = NULL) {
+    $this->contentType = $node_type;
     return parent::buildForm($form, $form_state);
   }
 

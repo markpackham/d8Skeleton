@@ -6,8 +6,8 @@ use Drupal\Core\Form\ConfirmFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Url;
-use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\node_revision_delete\NodeRevisionDeleteInterface;
+use Drupal\node\NodeInterface;
 
 /**
  * Provides a candidate node revision deletion confirmation form.
@@ -15,16 +15,9 @@ use Drupal\node_revision_delete\NodeRevisionDeleteInterface;
 class CandidateNodesRevisionsDeleteForm extends ConfirmFormBase {
 
   /**
-   * The entity type manager service.
+   * The node type object.
    *
-   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
-   */
-  protected $entityTypeManager;
-
-  /**
-   * The node object.
-   *
-   * @var \Drupal\node\Entity\Node
+   * @var \Drupal\node\NodeTypeInterface
    */
   protected $node;
 
@@ -38,13 +31,10 @@ class CandidateNodesRevisionsDeleteForm extends ConfirmFormBase {
   /**
    * Constructor.
    *
-   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
-   *   The entity type manager.
    * @param \Drupal\node_revision_delete\NodeRevisionDeleteInterface $node_revision_delete
    *   The node revision delete.
    */
-  public function __construct(EntityTypeManagerInterface $entity_type_manager, NodeRevisionDeleteInterface $node_revision_delete) {
-    $this->entityTypeManager = $entity_type_manager;
+  public function __construct(NodeRevisionDeleteInterface $node_revision_delete) {
     $this->nodeRevisionDelete = $node_revision_delete;
   }
 
@@ -53,7 +43,6 @@ class CandidateNodesRevisionsDeleteForm extends ConfirmFormBase {
    */
   public static function create(ContainerInterface $container) {
     return new static(
-      $container->get('entity_type.manager'),
       $container->get('node_revision_delete')
     );
   }
@@ -62,14 +51,14 @@ class CandidateNodesRevisionsDeleteForm extends ConfirmFormBase {
    * {@inheritdoc}
    */
   public function getFormId() {
-    return 'content_type_revisions_delete_confirm_form';
+    return 'node_revision_delete.candidates_nodes_revisions_delete';
   }
 
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, $content_type = NULL, $nid = NULL) {
-    $this->node = $this->entityTypeManager->getStorage('node')->load($nid);
+  public function buildForm(array $form, FormStateInterface $form_state, $node_type = NULL, NodeInterface $node = NULL) {
+    $this->node = $node;
     return parent::buildForm($form, $form_state);
   }
 
@@ -107,7 +96,7 @@ class CandidateNodesRevisionsDeleteForm extends ConfirmFormBase {
    * {@inheritdoc}
    */
   public function getCancelUrl() {
-    return new Url('node_revision_delete.candidate_nodes', ['content_type' => $this->node->getType()]);
+    return new Url('node_revision_delete.candidate_nodes', ['node_type' => $this->node->getType()]);
   }
 
   /**

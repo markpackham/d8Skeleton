@@ -10,6 +10,7 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\node_revision_delete\NodeRevisionDeleteInterface;
 use Drupal\Core\Link;
 use Drupal\Core\Datetime\DateFormatterInterface;
+use Drupal\node\NodeTypeInterface;
 
 /**
  * Class CandidateNodesForm.
@@ -74,27 +75,51 @@ class CandidateNodesForm extends FormBase {
    * {@inheritdoc}
    */
   public function getFormId() {
-    return 'candidates_nodes';
+    return 'node_revision_delete.candidates_nodes';
   }
 
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, $content_type = NULL) {
+  public function buildForm(array $form, FormStateInterface $form_state, NodeTypeInterface $node_type = NULL) {
     // Table header.
     $header = [
       $this->t('Nid'),
-      $this->t('Title'),
-      $this->t('Author'),
-      $this->t('Status'),
-      $this->t('Updated'),
-      $this->t('Candidate revisions'),
+      [
+        'data' => $this->t('Title'),
+        // Hide the description on narrow width devices.
+        'class' => [RESPONSIVE_PRIORITY_MEDIUM],
+      ],
+      [
+        'data' => $this->t('Author'),
+        // Hide the description on narrow width devices.
+        'class' => [RESPONSIVE_PRIORITY_MEDIUM],
+      ],
+      [
+        'data' => $this->t('Status'),
+        // Hide the description on narrow width devices.
+        'class' => [RESPONSIVE_PRIORITY_MEDIUM],
+      ],
+      [
+        'data' => $this->t('Updated'),
+        // Hide the description on narrow width devices.
+        'class' => [RESPONSIVE_PRIORITY_MEDIUM],
+      ],
+      [
+        'data' => $this->t('Candidate revisions'),
+        // Hide the description on narrow width devices.
+        'class' => [RESPONSIVE_PRIORITY_MEDIUM],
+      ],
       $this->t('Operations'),
     ];
     // Table rows.
     $rows = [];
+
+    // Getting the node type machine name.
+    $node_type_machine_name = $node_type->id();
+
     // Getting the cantidate nodes.
-    $candidate_nodes = $this->nodeRevisionDelete->getCandidatesNodes($content_type);
+    $candidate_nodes = $this->nodeRevisionDelete->getCandidatesNodes($node_type_machine_name);
     $nodes = $this->entityTypeManager->getStorage('node')->loadMultiple($candidate_nodes);
 
     /* @var $node \Drupal\node\Entity\Node */
@@ -102,14 +127,14 @@ class CandidateNodesForm extends FormBase {
       $nid = $node->id();
 
       $route_parameters = [
-        'content_type' => $content_type,
-        'nid' => $nid,
+        'node_type' => $node_type_machine_name,
+        'node' => $nid,
       ];
 
       // Number of candidate revisions.
       $candidate_revisions = count($this->nodeRevisionDelete->getCandidatesRevisionsByNids([$nid]));
       // Creating a link to the candidate revisions page.
-      $candidate_revisions = Link::createFromRoute($candidate_revisions, 'node_revision_delete.candidate_revisions', $route_parameters);
+      $candidate_revisions_link = Link::createFromRoute($candidate_revisions, 'node_revision_delete.candidate_revisions_node', $route_parameters);
 
       $dropbutton = [
         '#type' => 'dropbutton',
@@ -129,17 +154,15 @@ class CandidateNodesForm extends FormBase {
         $node->getOwner()->getAccountName() ? Link::fromTextAndUrl($node->getOwner()->getAccountName(), $node->getOwner()->toUrl('canonical')) : $this->t('Anonymous (not verified)'),
         $node->isPublished() ? $this->t('Published') : $this->t('Not published'),
         $this->dateFormatter->format($node->getChangedTime(), 'short'),
-        $candidate_revisions,
+        $candidate_revisions_link,
         [
           'data' => $dropbutton,
         ],
       ];
     }
 
-    /* @var $content_type \Drupal\node\Entity\NodeType */
-    $content_type = $this->entityTypeManager->getStorage('node_type')->load($content_type);
-    $content_type_url = $content_type->toUrl()->toString();
-    $caption = $this->t('Candidates nodes for content type <a href=":url">%title</a>', [':url' => $content_type_url, '%title' => $content_type->label()]);
+    $content_type_url = $node_type->toUrl()->toString();
+    $caption = $this->t('Candidates nodes for content type <a href=":url">%title</a>', [':url' => $content_type_url, '%title' => $node_type->label()]);
 
     $form['candidate_nodes'] = [
       '#type' => 'tableselect',

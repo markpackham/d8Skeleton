@@ -37,7 +37,7 @@ function node_revision_delete_help($route_name, RouteMatchInterface $route_match
       $output = '';
       $output .= '<p>' . t("To allow Node Revision Delete to act upon a certain content type, you should navigate to the desired content type's edit page via:") . '</p>';
       $output .= '<p><em>' . t('Administration » Structure » Content types » [Content type name]') . '</em></p>';
-      $output .= '<p>' . t("Under the Publishing Options tab, enable the 'Create new revision' and 'Limit the amount of revisions for this content type' checkboxes. Change the Maximum number of revisions to keep, if you need to, and finally, save your changes clicking in the Save content type button.") . '</p>';
+      $output .= '<p>' . t("Under the Publishing Options tab, enable the 'Create new revision' and 'Limit the amount of revisions' checkboxes. Change the Maximum number of revisions to keep, if you need to, and finally, save your changes clicking in the Save content type button.") . '</p>';
 
       return $output;
   }
@@ -71,11 +71,12 @@ function node_revision_delete_form_node_type_form_alter(&$form, FormStateInterfa
     '#type' => 'fieldset',
     '#title' => t("Node revision delete"),
     '#attributes' => ['class' => ['fieldgroup', 'form-composite']],
+    '#description' => t('The settings defined in this section will be applied to each node of this content type.'),
   ];
   // Element to track the content type.
   $form['workflow']['section']['node_revision_delete_track'] = [
     '#type' => 'checkbox',
-    '#title' => t('Limit the number of revisions for this content type'),
+    '#title' => t('Limit the number of revisions'),
     '#default_value' => $track,
     '#attached' => [
       'library' => [
@@ -208,12 +209,12 @@ function node_revision_delete_form_node_revision_delete_confirm_alter(&$form, Fo
     ];
 
     $headers = [
+      t('Revision ID'),
       [
         'data' => t('Revision'),
         // Hide the description on narrow width devices.
         'class' => [RESPONSIVE_PRIORITY_MEDIUM],
       ],
-      t('Revision ID'),
     ];
     // Cache service for later uses.
     $renderer = \Drupal::service('renderer');
@@ -231,7 +232,7 @@ function node_revision_delete_form_node_revision_delete_confirm_alter(&$form, Fo
       $revision_url = new Url('entity.node.revision', ['node' => $revision->id(), 'node_revision' => $revision->getRevisionId()]);
       $revision_link = Link::fromTextAndUrl($date, $revision_url)->toRenderable();
 
-      $data = [
+      $revision_info = [
         '#type' => 'inline_template',
         '#template' => '{% trans %}{{ date }} by {{ username }}{% endtrans %}{% if message %}<p class="revision-log">{{ message }}</p>{% endif %}',
         '#context' => [
@@ -245,8 +246,8 @@ function node_revision_delete_form_node_revision_delete_confirm_alter(&$form, Fo
       ];
 
       $rows[] = [
-        ['data' => $data],
         $revision->getRevisionId(),
+        ['data' => $revision_info],
       ];
     }
 

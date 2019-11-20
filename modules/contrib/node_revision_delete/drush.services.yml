@@ -1,6 +1,6 @@
 services:
   node_revision_delete.commands:
     class: \Drupal\node_revision_delete\Commands\NodeRevisionDeleteCommands
-    arguments: ['@node_revision_delete.cli', '@config.factory', '@node_revision_delete']
+    arguments: ['@config.factory', '@node_revision_delete', '@date.formatter', '@state', '@entity_type.manager']
     tags:
       - { name: drush.command }

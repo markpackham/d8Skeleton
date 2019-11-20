@@ -318,6 +318,7 @@ class NodeRevisionDelete implements NodeRevisionDeleteInterface {
       $sub_query->where('n.vid <> r.vid');
       $sub_query->groupBy('n.nid');
       $sub_query->groupBy('r.vid');
+      $sub_query->groupBy('r.revision_timestamp');
       $sub_query->orderBy('revision_timestamp', 'DESC');
       // We need to reduce in 1 because we don't want to count the default vid.
       // We excluded the default revision in the where call.
@@ -356,6 +357,7 @@ class NodeRevisionDelete implements NodeRevisionDeleteInterface {
     $sub_query->where('n.vid <> r.vid');
     $sub_query->groupBy('n.nid');
     $sub_query->groupBy('r.vid');
+    $sub_query->groupBy('revision_timestamp');
     $sub_query->orderBy('revision_timestamp', 'DESC');
     // We need to reduce in 1 because we don't want to count the default vid.
     // We excluded the default revision in the where call.

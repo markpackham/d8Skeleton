@@ -4,9 +4,12 @@ namespace Drupal\node_revision_delete\Commands;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\node_revision_delete\NodeRevisionDelete;
-use Drupal\node_revision_delete\NodeRevisionDeleteCliService;
 use Drush\Commands\DrushCommands;
 use Consolidation\AnnotatedCommand\CommandData;
+use Drupal\node_revision_delete\Utility\Time;
+use Drupal\Core\Datetime\DateFormatterInterface;
+use Drupal\Core\State\StateInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 
 /**
  * Class NodeRevisionDeleteCommands.
@@ -14,13 +17,6 @@ use Consolidation\AnnotatedCommand\CommandData;
  * @package Drupal\node_revision_delete\Commands
  */
 class NodeRevisionDeleteCommands extends DrushCommands {
-
-  /**
-   * The NodeRevisionCliService.
-   *
-   * @var \Drupal\node_revision_delete\NodeRevisionDeleteCliService
-   */
-  protected $cliService;
 
   /**
    * The ConfigManager service.
@@ -32,28 +28,57 @@ class NodeRevisionDeleteCommands extends DrushCommands {
   /**
    * The NodeRevisionDelete service.
    *
-   * @var NodeRevisionDelete
+   * @var \Drupal\node_revision_delete\NodeRevisionDelete
    */
   protected $nodeRevisionDelete;
 
   /**
+   * The DateFormatter service.
+   *
+   * @var \Drupal\Core\Datetime\DateFormatterInterface
+   */
+  protected $dateFormatter;
+
+  /**
+   * The State service.
+   *
+   * @var \Drupal\Core\State\StateInterface
+   */
+  protected $state;
+
+  /**
+   * The EntityTypeManager service.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   */
+  protected $entityTypeManager;
+
+  /**
    * NodeRevisionDeleteCommands constructor.
    *
-   * @param \Drupal\node_revision_delete\NodeRevisionDeleteCliService $cliService
-   *   The NodeRevisionDeleteCliService.
    * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
    *   The ConfigManager service.
-   * @param NodeRevisionDelete $nodeRevisionDelete
+   * @param \Drupal\node_revision_delete\NodeRevisionDelete $nodeRevisionDelete
    *   The NodeRevisionDelete service.
+   * @param \Drupal\Core\Datetime\DateFormatterInterface $dateFormatter
+   *   The DateFormatter service.
+   * @param \Drupal\Core\State\StateInterface $state
+   *   The State service.
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
+   *   The EntityTypeManager service.
    */
   public function __construct(
-    NodeRevisionDeleteCliService $cliService,
     ConfigFactoryInterface $configFactory,
-    NodeRevisionDelete $nodeRevisionDelete
+    NodeRevisionDelete $nodeRevisionDelete,
+    DateFormatterInterface $dateFormatter,
+    StateInterface $state,
+    EntityTypeManagerInterface $entityTypeManager
   ) {
-    $this->cliService = $cliService;
     $this->configFactory = $configFactory;
     $this->nodeRevisionDelete = $nodeRevisionDelete;
+    $this->dateFormatter = $dateFormatter;
+    $this->state = $state;
+    $this->entityTypeManager = $entityTypeManager;
   }
 
   /**
@@ -100,13 +125,22 @@ class NodeRevisionDeleteCommands extends DrushCommands {
    * @aliases nrd-le, nrd-last-execute
    */
   public function lastExecute() {
-    $this->cliService->ioGetLastExecute($this->io());
+    // Getting the value.
+    $last_execute = $this->state->get('node_revision_delete.last_execute', 0);
+    if (!empty($last_execute)) {
+      $last_execute = $this->dateFormatter->format($last_execute);
+      $message = dt('<info>The last time when node revision delete was made was: @last_execute.</info>', ['@last_execute' => $last_execute]);
+    }
+    else {
+      $message = dt('<info>The removal of revisions through the module node revision delete has never been executed on this site.</info>');
+    }
+    $this->writeln($message);
   }
 
   /**
    * Configures the frequency with which to delete revisions while cron run.
    *
-   * @param int $time
+   * @param string $time
    *   The time value (never, every_hour, every_time, everyday, every_week,
    *   every_10_days, every_15_days, every_month, every_3_months,
    *   every_6_months, every_year or every_2_years)
@@ -119,9 +153,34 @@ class NodeRevisionDeleteCommands extends DrushCommands {
    *
    * @command nrd:set-time
    * @aliases nrd-st, nrd-set-time
+   *
+   * @throws \Drush\Exceptions\UserAbortException
    */
   public function setTime($time = '') {
-    $this->cliService->ioSetTime($time, $this->io());
+    // Getting an editable config because we will get and set a value.
+    $config = $this->configFactory->getEditable('node_revision_delete.settings');
+
+    // Check for correct argument.
+    $options = Time::convertWordToTime();
+    $options_keys = array_keys($options);
+
+    if (!in_array($time, $options_keys)) {
+      if (!empty($time)) {
+        $this->writeln(dt('"@time_value" is not a valid time argument.', ['@time_value' => $time]));
+      }
+      $choice = $this->io()->choice(dt('Choose the frequency with which to delete revisions while cron is running:'), $this->nodeRevisionDelete->getTimeValues());
+      $time = $options[$options_keys[$choice]];
+    }
+    else {
+      $time = $options[$time];
+    }
+    // Saving the values in the config.
+    $config->set('node_revision_delete_time', $time);
+    $config->save();
+    // Getting the values from the config.
+    $time_value = $this->nodeRevisionDelete->getTimeValues($time);
+    $message = dt('<info>The frequency with which to delete revisions while cron is running was set to: @time.</info>', ['@time' => $time_value]);
+    $this->writeln($message);
   }
 
   /**
@@ -135,7 +194,14 @@ class NodeRevisionDeleteCommands extends DrushCommands {
    * @aliases nrd-gt, nrd-get-time
    */
   public function getTime() {
-    $this->cliService->ioGetTime($this->io());
+    // Getting the config.
+    $config = $this->configFactory->get('node_revision_delete.settings');
+    // Getting the values from the config.
+    $time = $config->get('node_revision_delete_time');
+    $time = $this->nodeRevisionDelete->getTimeValues($time);
+
+    $message = dt('<info>The frequency with which to delete revisions while cron is running is: @time.</info>', ['@time' => $time]);
+    $this->writeln($message);
   }
 
   /**
@@ -176,7 +242,7 @@ class NodeRevisionDeleteCommands extends DrushCommands {
 
       $time = $this->nodeRevisionDelete->getTimeNumberString($max_number, $time);
       $message = dt('<info>The maximum inactivity time was set to @max_number @time.</info>', ['@max_number' => $max_number, '@time' => $time]);
-      $this->io()->writeln($message);
+      $this->writeln($message);
     }
     else {
       // Getting the values from the config.
@@ -186,7 +252,7 @@ class NodeRevisionDeleteCommands extends DrushCommands {
 
       $time = $this->nodeRevisionDelete->getTimeNumberString($max_number, $time);
       $message = dt('<info>The maximum inactivity time is: @max_number @time.</info>', ['@max_number' => $max_number, '@time' => $time]);
-      $this->io()->writeln($message);
+      $this->writeln($message);
     }
   }
 
@@ -229,7 +295,7 @@ class NodeRevisionDeleteCommands extends DrushCommands {
       // Is singular or plural?
       $time = $this->nodeRevisionDelete->getTimeNumberString($max_number, $time);
       $message = dt('<info>The maximum time for the minimum age was set to @max_number @time.</info>', ['@max_number' => $max_number, '@time' => $time]);
-      $this->io()->writeln($message);
+      $this->writeln($message);
     }
     else {
       // Getting the values from the config.
@@ -238,9 +304,9 @@ class NodeRevisionDeleteCommands extends DrushCommands {
       $time = $node_revision_delete_minimum_age_to_delete_time['time'];
 
       // Is singular or plural?
-      $time = \Drupal::service('node_revision_delete')->getTimeNumberString($max_number, $time);
+      $time = $this->nodeRevisionDelete->getTimeNumberString($max_number, $time);
       $message = dt('<info>The maximum time for the minimum age is: @max_number @time.</info>', ['@max_number' => $max_number, '@time' => $time]);
-      $this->io()->writeln($message);
+      $this->writeln($message);
     }
   }
 
@@ -261,13 +327,30 @@ class NodeRevisionDeleteCommands extends DrushCommands {
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
   public function deletePriorRevisions($nid = 0, $vid = 0) {
-    $this->cliService->ioDeletePriorRevisions($nid, $vid, $this->io());
+    // Get list of prior revisions.
+    $previousRevisions = $this->nodeRevisionDelete->getPreviousRevisions($nid, $vid);
+
+    if (count($previousRevisions) === 0) {
+      $this->writeln(dt('<error>No prior revision(s) found to delete.</error>'));
+      return;
+    }
+
+    if ($this->io()->confirm(dt("Confirm deleting @count revision(s)?", ['@count' => count($previousRevisions)]))) {
+      // Check if current revision should be deleted, too.
+      if ($this->io()->confirm(dt("Additionally, do you want to delete the revision @vid? @count revision(s) will be deleted.", ['@vid' => $vid, '@count' => count($previousRevisions) + 1]))) {
+        $this->entityTypeManager->getStorage('node')->deleteRevision($vid);
+      }
+
+      foreach ($previousRevisions as $revision) {
+        $this->entityTypeManager->getStorage('node')->deleteRevision($revision->getRevisionId());
+      }
+    }
   }
 
   /**
    * Validate inputs before executing the drush command.
    *
-   * @param Consolidation\AnnotatedCommand\CommandData $commandData
+   * @param \Consolidation\AnnotatedCommand\CommandData $commandData
    *   The command data.
    *
    * @return bool
@@ -285,20 +368,20 @@ class NodeRevisionDeleteCommands extends DrushCommands {
 
     // Nid argument must be numeric.
     if (!is_numeric($nid)) {
-      $this->io()->error(t('Argument nid must be numeric.'));
+      $this->io()->error(dt('Argument nid must be numeric.'));
       return FALSE;
     }
 
     // Vid argument must be numeric.
     if (!is_numeric($vid)) {
-      $this->io()->error(t('Argument vid must be numeric.'));
+      $this->io()->error(dt('Argument vid must be numeric.'));
       return FALSE;
     }
 
     // Check if argument nid is a valid node id.
-    $node = \Drupal::entityTypeManager()->getStorage('node')->load($nid);
+    $node = $this->entityTypeManager->getStorage('node')->load($nid);
     if (is_null($node)) {
-      $this->io()->error(t("@nid is not a valid node id.", ['@nid' => $nid]));
+      $this->io()->error(dt("@nid is not a valid node id.", ['@nid' => $nid]));
       return FALSE;
     }
   }

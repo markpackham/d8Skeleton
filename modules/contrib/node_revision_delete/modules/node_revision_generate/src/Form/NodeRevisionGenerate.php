@@ -203,7 +203,7 @@ class NodeRevisionGenerate extends FormBase {
         'init_message' => $this->t('Starting the creation of revisions.'),
         'progress_message' => $this->t('Processed @current out of @total (@percentage%). Estimated time: @estimate.'),
         'finished' => [NodeRevisionGenerateBatch::class, 'finish'],
-        'error_message' => t('The revision creation process has encountered an error.'),
+        'error_message' => $this->t('The revision creation process has encountered an error.'),
       ];
 
       batch_set($batch);

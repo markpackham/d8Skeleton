@@ -8,7 +8,7 @@ core: 8.x
 dependencies:
   - drupal:node
 
-# Information added by Drupal.org packaging script on 2019-10-29
-version: '8.x-1.0-beta3'
+# Information added by Drupal.org packaging script on 2019-11-19
+version: '8.x-1.0-beta4'
 project: 'node_revision_delete'
-datestamp: 1572374886
+datestamp: 1574197102

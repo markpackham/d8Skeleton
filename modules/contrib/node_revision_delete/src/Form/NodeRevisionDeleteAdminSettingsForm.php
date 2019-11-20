@@ -12,11 +12,11 @@ use Drupal\node_revision_delete\NodeRevisionDeleteInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 
 /**
- * Class NodeRevisionDeleteAdminSettings.
+ * Class NodeRevisionDeleteAdminSettingsForm.
  *
  * @package Drupal\node_revision_delete\Form
  */
-class NodeRevisionDeleteAdminSettings extends ConfigFormBase {
+class NodeRevisionDeleteAdminSettingsForm extends ConfigFormBase {
 
   /**
    * The entity type manager service.
@@ -73,7 +73,7 @@ class NodeRevisionDeleteAdminSettings extends ConfigFormBase {
    * {@inheritdoc}
    */
   public function getFormId() {
-    return 'node_revision_delete_admin_settings';
+    return 'node_revision_delete.node_revision_delete_admin_settings';
   }
 
   /**
@@ -83,12 +83,36 @@ class NodeRevisionDeleteAdminSettings extends ConfigFormBase {
     // Table header.
     $header = [
       $this->t('Content type'),
-      $this->t('Machine name'),
-      $this->t('Minimum to keep'),
-      $this->t('Minimum age'),
-      $this->t('When to delete'),
-      $this->t('Candidate nodes'),
-      $this->t('Candidate revisions'),
+      [
+        'data' => $this->t('Machine name'),
+        // Hide the description on narrow width devices.
+        'class' => [RESPONSIVE_PRIORITY_MEDIUM],
+      ],
+      [
+        'data' => $this->t('Minimum to keep'),
+        // Hide the description on narrow width devices.
+        'class' => [RESPONSIVE_PRIORITY_MEDIUM],
+      ],
+      [
+        'data' => $this->t('Minimum age'),
+        // Hide the description on narrow width devices.
+        'class' => [RESPONSIVE_PRIORITY_MEDIUM],
+      ],
+      [
+        'data' => $this->t('When to delete'),
+        // Hide the description on narrow width devices.
+        'class' => [RESPONSIVE_PRIORITY_MEDIUM],
+      ],
+      [
+        'data' => $this->t('Candidate nodes'),
+        // Hide the description on narrow width devices.
+        'class' => [RESPONSIVE_PRIORITY_MEDIUM],
+      ],
+      [
+        'data' => $this->t('Candidate revisions'),
+        // Hide the description on narrow width devices.
+        'class' => [RESPONSIVE_PRIORITY_MEDIUM],
+      ],
       $this->t('Operations'),
     ];
     // Table rows.
@@ -149,7 +173,7 @@ class NodeRevisionDeleteAdminSettings extends ConfigFormBase {
         }
 
         $route_parameters = [
-          'content_type' => $content_type_machine_name,
+          'node_type' => $content_type_machine_name,
         ];
 
         if ($candidate_revisions > 0) {
@@ -160,6 +184,9 @@ class NodeRevisionDeleteAdminSettings extends ConfigFormBase {
           ];
           // Creating a link to the candidate nodes page.
           $candidate_nodes = Link::createFromRoute($candidate_nodes, 'node_revision_delete.candidate_nodes', $route_parameters);
+
+          // Creating a link to the candidate revisions page.
+          $candidate_revisions = Link::createFromRoute($candidate_revisions, 'node_revision_delete.candidate_revisions_content_type', $route_parameters);
         }
 
         // Action to delete the configuration for the content type.

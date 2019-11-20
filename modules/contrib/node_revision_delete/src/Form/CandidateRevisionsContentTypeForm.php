@@ -12,13 +12,14 @@ use Drupal\node_revision_delete\NodeRevisionDeleteInterface;
 use Drupal\Core\Link;
 use Drupal\Core\Datetime\DateFormatterInterface;
 use Drupal\Core\Render\RendererInterface;
+use Drupal\node\NodeTypeInterface;
 
 /**
- * Class CandidateRevisionsForm.
+ * Class CandidateRevisionsContentTypeForm.
  *
  * @package Drupal\node_revision_delete\Form
  */
-class CandidateRevisionsForm extends FormBase {
+class CandidateRevisionsContentTypeForm extends FormBase {
 
   /**
    * The entity type manager service.
@@ -88,21 +89,27 @@ class CandidateRevisionsForm extends FormBase {
    * {@inheritdoc}
    */
   public function getFormId() {
-    return 'candidates_nodes';
+    return 'node_revision_delete.candidates_revisions_content_type';
   }
 
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, $content_type = NULL, $nid = NULL) {
+  public function buildForm(array $form, FormStateInterface $form_state, NodeTypeInterface $node_type = NULL) {
     // Table header.
     $header = [
+      $this->t('Revision ID'),
       [
         'data' => $this->t('Revision'),
         // Hide the description on narrow width devices.
         'class' => [RESPONSIVE_PRIORITY_MEDIUM],
       ],
-      t('Revision ID'),
+      $this->t('nid'),
+      [
+        'data' => $this->t('Title'),
+        // Hide the description on narrow width devices.
+        'class' => [RESPONSIVE_PRIORITY_MEDIUM],
+      ],
       [
         'data' => $this->t('Operations'),
         // Hide the Operations on narrow width devices.
@@ -110,15 +117,15 @@ class CandidateRevisionsForm extends FormBase {
       ],
     ];
 
+    // Getting the node type machine name.
+    $node_type_machine_name = $node_type->id();
     // Getting the node revisions.
-    $revisions = $this->nodeRevisionDelete->getCandidatesRevisionsByNids([$nid]);
-    // Getting the node storage.
-    $node_storage = $this->entityTypeManager->getStorage('node');
+    $revisions = $this->nodeRevisionDelete->getCandidatesRevisions($node_type_machine_name);
 
     $rows = [];
     foreach ($revisions as $revision) {
       // Loading the revisions.
-      $revision = $node_storage->loadRevision($revision);
+      $revision = $this->entityTypeManager->getStorage('node')->loadRevision($revision);
 
       $username = [
         '#theme' => 'username',
@@ -130,7 +137,7 @@ class CandidateRevisionsForm extends FormBase {
       $revision_url = new Url('entity.node.revision', ['node' => $revision->id(), 'node_revision' => $revision->getRevisionId()]);
       $revision_link = Link::fromTextAndUrl($date, $revision_url)->toRenderable();
 
-      $data = [
+      $revision_info = [
         '#type' => 'inline_template',
         '#template' => '{% trans %}{{ date }} by {{ username }}{% endtrans %}{% if message %}<p class="revision-log">{{ message }}</p>{% endif %}',
         '#context' => [
@@ -143,10 +150,23 @@ class CandidateRevisionsForm extends FormBase {
         ],
       ];
 
+      // Getting the nid.
+      $nid = $revision->id();
       // Getting the vid.
       $vid = $revision->getRevisionId();
       // The route parameters.
-      $route_parameters = [
+      $route_parameters_destination = [
+        'node_type' => $node_type_machine_name,
+      ];
+
+      // Return to the same page after save the content type.
+      $destination = Url::fromRoute('node_revision_delete.candidate_revisions_content_type', $route_parameters_destination)->toString();
+      $destination_options = [
+        'query' => ['destination' => $destination],
+      ];
+
+      // The route parameters.
+      $route_parameters_dropbutton = [
         'node' => $nid,
         'node_revision' => $vid,
       ];
@@ -157,24 +177,22 @@ class CandidateRevisionsForm extends FormBase {
           // Action to delete revisions.
           'delete' => [
             'title' => $this->t('Delete'),
-            'url' => Url::fromRoute('node.revision_delete_confirm', $route_parameters),
+            'url' => Url::fromRoute('node.revision_delete_confirm', $route_parameters_dropbutton, $destination_options),
           ],
         ],
       ];
 
       $rows[$vid] = [
-        ['data' => $data],
         $vid,
-        [
-          'data' => $dropbutton,
-        ],
+        ['data' => $revision_info],
+        $nid,
+        Link::fromTextAndUrl($revision->label(), $revision->toUrl('canonical')),
+        ['data' => $dropbutton],
       ];
     }
 
-    // Getting the node.
-    $node = $node_storage->load($nid);
-    $node_url = $node->toUrl()->toString();
-    $caption = $this->t('Candidates revisions for node <a href=":url">%title</a>', [':url' => $node_url, '%title' => $node->getTitle()]);
+    $node_type_url = $node_type->toUrl()->toString();
+    $caption = $this->t('Candidates revisions for content type <a href=":url">%title</a>', [':url' => $node_type_url, '%title' => $node_type->label()]);
 
     $form['candidate_revisions'] = [
       '#type' => 'tableselect',
