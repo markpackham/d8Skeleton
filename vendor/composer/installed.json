@@ -3680,21 +3680,21 @@
     },
     {
         "name": "drupal/mailsystem",
-        "version": "4.1.0",
-        "version_normalized": "4.1.0.0",
+        "version": "4.2.0",
+        "version_normalized": "4.2.0.0",
         "source": {
             "type": "git",
             "url": "https://git.drupalcode.org/project/mailsystem.git",
-            "reference": "8.x-4.1"
+            "reference": "8.x-4.2"
         },
         "dist": {
             "type": "zip",
-            "url": "https://ftp.drupal.org/files/projects/mailsystem-8.x-4.1.zip",
-            "reference": "8.x-4.1",
-            "shasum": "318b87f1fdf96e6db30b04a98108af02a0fc3dcc"
+            "url": "https://ftp.drupal.org/files/projects/mailsystem-8.x-4.2.zip",
+            "reference": "8.x-4.2",
+            "shasum": "51d3f4831cdc3fd2748efc750d4946ddb5b50c3c"
         },
         "require": {
-            "drupal/core": "^8.0.5"
+            "drupal/core": "^8.7.7 || ^9"
         },
         "type": "drupal-module",
         "extra": {
@@ -3702,8 +3702,8 @@
                 "dev-4.x": "4.x-dev"
             },
             "drupal": {
-                "version": "8.x-4.1",
-                "datestamp": "1467993646",
+                "version": "8.x-4.2",
+                "datestamp": "1574194688",
                 "security-coverage": {
                     "status": "covered",
                     "message": "Covered by Drupal's security advisory policy"
