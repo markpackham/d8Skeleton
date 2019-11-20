@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\poll\Tests;
+namespace Drupal\Tests\poll\Functional;
 
 use Drupal\poll\Entity\Poll;
 
@@ -14,7 +14,7 @@ class PollTokenReplaceTest extends PollTestBase {
   /**
    * Creates a poll, then tests the tokens generated from it.
    */
-  protected function testPollTokenReplacement() {
+  public function testPollTokenReplacement() {
     // Create a poll with three choices.
     $poll = $this->pollCreate(3);
     $poll->save();

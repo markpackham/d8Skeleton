@@ -1,8 +1,9 @@
 <?php
 
-namespace Drupal\poll\Tests;
+namespace Drupal\Tests\poll\Functional;
 
-use Drupal\field_ui\Tests\FieldUiTestTrait;
+
+use Drupal\Tests\field_ui\Traits\FieldUiTestTrait;
 
 /**
  * Tests the poll fields.
@@ -45,7 +46,7 @@ class PollFieldTest extends PollTestBase {
   /**
    * Test poll entity fields.
    */
-  protected function testPollFields() {
+  public function testPollFields() {
     $poll = $this->poll;
     $this->drupalLogin($this->admin_user);
     // Add some fields.

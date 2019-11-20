@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\poll\Tests;
+namespace Drupal\Tests\poll\Functional;
 
 /**
  * Tests the poll list.
@@ -12,7 +12,7 @@ class PollListTest extends PollTestBase {
   /**
    * Test if a list of polls is displayed properly.
    */
-  protected function testViewListPolls() {
+  public function testViewListPolls() {
     $poll = $this->poll;
     $poll2 = $this->pollCreate();
 
@@ -20,16 +20,16 @@ class PollListTest extends PollTestBase {
     $this->drupalLogin($this->web_user);
 
     $this->drupalGet('admin/content/poll');
-    $this->assertResponse(403, 'Poll overview list not available.');
+    $this->assertResponse(403);
 
     $this->drupalGet('polls');
-    $this->assertText($poll->label(), 'Poll appears in poll list.');
-    $this->assertText($poll2->label(), 'Poll appears in poll list.');
+    $this->assertText($poll->label());
+    $this->assertText($poll2->label());
 
     // Check to see if the vote was recorded.
     $edit = array('choice' => $this->getChoiceId($poll, 1));
-    $this->drupalPostForm(NULL, $edit, t('Vote'), [], [], 'poll-view-form-1');
-    $this->assertText('Your vote has been recorded.', 'Your vote was recorded.');
+    $this->drupalPostForm(NULL, $edit, t('Vote'), [], 'poll-view-form-1');
+    $this->assertText('Your vote has been recorded.');
 
     // Check overview list with "access poll overview" permission
     $account = $this->drupalCreateUser([
@@ -37,7 +37,7 @@ class PollListTest extends PollTestBase {
     ]);
     $this->drupalLogin($account);
     $this->drupalGet('admin/content/poll');
-    $this->assertResponse(200, 'Poll overview list available.');
+    $this->assertResponse(200);
   }
 
 }

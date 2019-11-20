@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\poll\Tests;
+namespace Drupal\Tests\poll\Functional;
 
 use Drupal\poll\Entity\Poll;
 
@@ -24,9 +24,9 @@ class PollExpirationTest extends PollTestBase {
     // is set to unlimited.
     $this->drupalLogin($this->admin_user);
     $this->drupalGet('poll/' . $poll->id(). '/edit');
-    $this->assertField('runtime', 'Poll expiration setting found.');
+    $this->assertField('runtime');
     $elements = $this->xpath('//select[@id="edit-runtime"]/option[@selected="selected"]');
-    $this->assertTrue(isset($elements[0]['value']) && $elements[0]['value'] == 0, 'Poll expiration set to unlimited.');
+    $this->assertEquals(0, $elements[0]->getAttribute('value'), 'Poll expiration set to unlimited.');
 
     // Set the expiration to one week.
     $runtime = 604800; // One week.
@@ -37,11 +37,11 @@ class PollExpirationTest extends PollTestBase {
     // here
     $this->drupalGet('poll/' . $poll->id(). '/edit');
     $elements = $this->xpath('//select[@id="edit-runtime"]/option[@selected="selected"]');
-    $this->assertTrue(isset($elements[0]['value']) && $elements[0]['value'] == $runtime, 'Poll expiration set to one week.');
+    $this->assertEquals($runtime, $elements[0]->getAttribute('value'), 'Poll expiration set to one week.');
 
     // Force a cron run. Since the expiration date has not yet been reached,
     // the poll should remain open.
-    $this->cronRun();
+    \Drupal::service('cron')->run();
     $this->assertTrue($poll->isOpen(), 'Poll remains open after cron.');
 
     $created = $poll->getCreated();
@@ -50,7 +50,7 @@ class PollExpirationTest extends PollTestBase {
     $poll->save();
 
     // Run cron and verify that the poll is now marked as "closed".
-    $this->cronRun();
+    \Drupal::service('cron')->run();
     $loaded_poll = Poll::load($poll->id());
     $this->assertTrue($loaded_poll->isClosed(), 'Poll has expired.');
   }

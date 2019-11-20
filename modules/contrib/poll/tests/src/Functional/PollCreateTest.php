@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\poll\Tests;
+namespace Drupal\Tests\poll\Functional;
 
 /**
  * Tests creating a poll.
@@ -12,23 +12,23 @@ class PollCreateTest extends PollTestBase {
   /**
    * Tests creating and editing a poll.
    */
-  protected function testPollCreate() {
+  public function testPollCreate() {
 
     $poll = $this->poll;
 
     // Check we loaded the right poll.
     $this->drupalLogin($this->admin_user);
     $this->drupalGet('poll/' . $poll->id() . '/edit');
-    $this->assertText($poll->label(), 'Correct poll loaded from database.');
+    $this->assertText($poll->label());
 
     // Verify applying condition for non-active polls.
     $this->drupalGet('admin/content/poll', ['query' => ['status' => '2']]);
-    $this->assertNoText($poll->label(), 'Poll does not appear in the Poll List');
+    $this->assertNoText($poll->label());
 
     // Verify poll appears on 'poll' page.
     $this->drupalGet('admin/content/poll');
-    $this->assertText($poll->label(), 'Poll appears in poll list.');
-    $this->assertText('Y', 'Poll is active.');
+    $this->assertText($poll->label());
+    $this->assertText('Y');
 
     // Click on the poll question to go to poll page.
     $this->clickLink($poll->label());
@@ -40,7 +40,7 @@ class PollCreateTest extends PollTestBase {
 
     // Check the new question has taken effect.
     $this->drupalGet('poll/' . $poll->id() . '/edit');
-    $this->assertText($new_question, 'Question successfully changed.');
+    $this->assertText($new_question);
 
     // Now add a new option to make sure that when we update the poll, the
     // option is displayed.
@@ -67,7 +67,7 @@ class PollCreateTest extends PollTestBase {
 
     // Poll create disallowed.
     $this->drupalGet('poll/add');
-    $this->assertResponse(403, 'Create poll form is not available.');
+    $this->assertResponse(403);
 
     // Get a poll.
     $this->drupalGet('poll/' . $poll->id());
@@ -92,7 +92,7 @@ class PollCreateTest extends PollTestBase {
     // Check to see if the vote was recorded and that the user may cancel their vote.
     $edit = array('choice' => 1);
     $this->drupalPostForm(NULL, $edit, t('Vote'));
-    $this->assertText('Your vote has been recorded.', 'Your vote was recorded.');
+    $this->assertText('Your vote has been recorded.');
     $elements = $this->xpath('//input[@value="Cancel vote"]');
     $this->assertTrue(isset($elements[0]), "'Cancel vote' button appears.");
 
@@ -116,14 +116,14 @@ class PollCreateTest extends PollTestBase {
     $this->drupalLogin($account);
     // Create poll allowed.
     $this->drupalGet('poll/add');
-    $this->assertResponse(200, 'Create poll form is available.');
-    $this->assertNoFieldByName('uid[0][target_id]', NULL, 'Poll author field not available.');
+    $this->assertResponse(200);
+    $this->assertNoFieldByName('uid[0][target_id]', NULL);
     // create poll and test edit
     $own_poll = $this->pollCreate(7, $account);
     $this->drupalGet('poll/' . $admin_poll->id() . '/edit');
-    $this->assertResponse(403, 'Any poll is not editable.');
+    $this->assertResponse(403);
     $this->drupalGet('poll/' . $own_poll->id() . '/edit');
-    $this->assertResponse(403, 'Own poll is not editable.');
+    $this->assertResponse(403);
     // test another user with "edit own poll" permission
     $account = $this->drupalCreateUser([
       'create polls',
@@ -132,9 +132,9 @@ class PollCreateTest extends PollTestBase {
     $this->drupalLogin($account);
     $own_poll = $this->pollCreate(7, $account);
     $this->drupalGet('poll/' . $admin_poll->id() . '/edit');
-    $this->assertResponse(403, 'Any poll is not editable.');
+    $this->assertResponse(403);
     $this->drupalGet('poll/' . $own_poll->id() . '/edit');
-    $this->assertResponse(200, 'Own poll is editable.');
-    $this->assertNoFieldByName('uid[0][target_id]', NULL, 'Poll author field not available.');
+    $this->assertResponse(200);
+    $this->assertNoFieldByName('uid[0][target_id]', NULL);
   }
 }

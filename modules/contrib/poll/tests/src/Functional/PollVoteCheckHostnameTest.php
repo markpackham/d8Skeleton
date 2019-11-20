@@ -1,8 +1,9 @@
 <?php
 
-namespace Drupal\poll\Tests;
+namespace Drupal\Tests\poll\Functional;
 
 use Drupal\Core\Session\AccountInterface;
+use Drupal\Core\Session\AnonymousUserSession;
 
 /**
  * Check that users and anonymous users from specified ip-address can only vote once.
@@ -43,8 +44,8 @@ class PollVoteCheckHostnameTest extends PollTestBase {
     //  $this->web_user->getUserName();
     // User1 vote on Poll.
     $this->drupalPostForm('poll/' . $this->poll->id(), $edit, t('Vote'));
-    $this->assertText(t('Your vote has been recorded.'), format_string('%user vote was recorded.', array('%user' => $this->web_user->getUserName())));
-    $this->assertText(t('Total votes:  @votes', array('@votes' => 1)), 'Vote count updated correctly.');
+    $this->assertText(t('Your vote has been recorded.'));
+    $this->assertText(t('Total votes:  @votes', array('@votes' => 1)));
 
     // Check to make sure User1 cannot vote again.
     $this->drupalGet('poll/' . $this->poll->id());
@@ -64,8 +65,8 @@ class PollVoteCheckHostnameTest extends PollTestBase {
 
     // Anonymous user vote on Poll.
     $this->drupalPostForm(NULL, $edit, t('Vote'));
-    $this->assertText(t('Your vote has been recorded.'), 'Anonymous vote was recorded.');
-    $this->assertText(t('Total votes:  @votes', array('@votes' => 2)), 'Vote count updated correctly.');
+    $this->assertText(t('Your vote has been recorded.'));
+    $this->assertText(t('Total votes:  @votes', array('@votes' => 2)));
     $elements = $this->xpath('//input[@value="Cancel vote"]');
     $this->assertTrue(!empty($elements), "'Cancel vote' button appears.");
 
@@ -82,8 +83,8 @@ class PollVoteCheckHostnameTest extends PollTestBase {
 
     // User2 vote on poll.
     $this->drupalPostForm('poll/' . $this->poll->id(), $edit, t('Vote'));
-    $this->assertText(t('Your vote has been recorded.'), format_string('%user vote was recorded.', array('%user' => $web_user2->getUserName())));
-    $this->assertText(t('Total votes:  @votes', array('@votes' => 3)), 'Vote count updated correctly.');
+    $this->assertText(t('Your vote has been recorded.'));
+    $this->assertText(t('Total votes:  @votes', array('@votes' => 3)));
     $elements = $this->xpath('//input[@value="Cancel vote"]');
     $this->assertTrue(empty($elements), "'Cancel vote' button does not appear.");
 
@@ -103,14 +104,16 @@ class PollVoteCheckHostnameTest extends PollTestBase {
     $this->drupalGet('poll/' . $this->poll->id());
     $this->assertEqual($this->drupalGetHeader('x-drupal-cache'), 'HIT', 'Cached page return.');
     $this->drupalPostForm(NULL, $edit, t('Vote'));
-    $this->assertText(t('Your vote has been recorded.'), format_string('%user vote was recorded.', array('%user' => $web_user2->getUserName())));
-    $this->assertText(t('Total votes:  @votes', array('@votes' => 4)), 'Vote count updated correctly.');
+    $this->assertText(t('Your vote has been recorded.'));
+    $this->assertText(t('Total votes:  @votes', array('@votes' => 4)));
     $elements = $this->xpath('//input[@value="Cancel vote"]');
     $this->assertTrue(!empty($elements), "'Cancel vote' button appears.");
 
     // Check to make sure Anonymous user cannot vote again with a new session,
-    // and that the vote from the previous session cannot be cancelled.
-    $this->curlClose();
+    // and that the vote from the previous session cannot be cancelled. This
+    // can't use drupalLogout() because we aren't actually logged in, so we
+    // manually unset the session cookie.
+    $this->getSession()->setCookie($this->getSessionName());
     $this->drupalGet('poll/' . $this->poll->id());
     $this->assertEqual($this->drupalGetHeader('x-drupal-cache'), 'HIT', 'Page was cacheable but was not in the cache.');
     $this->drupalPostForm(NULL, $edit, t('Vote'));

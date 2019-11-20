@@ -1,8 +1,9 @@
 <?php
 
-namespace Drupal\poll\Tests;
+namespace Drupal\Tests\poll\Functional;
 
 use Drupal\Core\Database\Database;
+use Drupal\poll\PollInterface;
 use Drupal\user\Entity\Role;
 use Drupal\user\RoleInterface;
 
@@ -25,8 +26,8 @@ class PollVoteTest extends PollTestBase {
       'choice' => '1',
     );
     $this->drupalPostForm('poll/' . $this->poll->id(), $edit, t('Vote'));
-    $this->assertText('Your vote has been recorded.', 'Your vote was recorded.');
-    $this->assertText('Total votes:  1', 'Vote count updated correctly.');
+    $this->assertText('Your vote has been recorded.');
+    $this->assertText('Total votes:  1');
     $elements = $this->xpath('//input[@value="Cancel vote"]');
     $this->assertTrue(isset($elements[0]), "'Cancel your vote' button appears.");
 
@@ -44,8 +45,8 @@ class PollVoteTest extends PollTestBase {
 
     // Cancel a vote.
     $this->drupalPostForm('poll/' . $this->poll->id(), array(), t('Cancel vote'));
-    $this->assertText('Your vote was cancelled.', 'Your vote was cancelled.');
-    $this->assertNoText('Cancel your vote', "Cancel vote button doesn't appear.");
+    $this->assertText('Your vote was cancelled.');
+    $this->assertNoText('Cancel your vote');
 
 //    $this->drupalGet('poll/' . $this->poll->id() . '/votes');
 //    $this->assertNoText($choices[0], 'Vote cancelled');
@@ -70,8 +71,8 @@ class PollVoteTest extends PollTestBase {
       'choice' => '1',
     );
     $this->drupalPostForm('poll/' . $this->poll->id(), $edit, t('Vote'));
-    $this->assertText('Your vote has been recorded.', 'Your vote was recorded.');
-    $this->assertText('Total votes:  1', 'Vote count updated correctly.');
+    $this->assertText('Your vote has been recorded.');
+    $this->assertText('Total votes:  1');
     $elements = $this->xpath('//input[@value="Cancel your vote"]');
     $this->assertTrue(empty($elements), "'Cancel your vote' button does not appear.");
 
@@ -80,13 +81,11 @@ class PollVoteTest extends PollTestBase {
     $this->drupalGet('admin/content/poll');
     $this->assertText($this->poll->label());
 
-    // Test for the overview page.
-    $field_status = $this->xpath('//table/tbody/tr[1]');
-    $active = (string) $field_status[0]->td[1];
-    $this->assertEqual(trim($active), 'Yes');
+    $assert_session = $this->assertSession();
 
-    $anonymous_votes = trim((string) $field_status[0]->td[2]);
-    $this->assertEqual($anonymous_votes, 'Off');
+    // Test for the overview page.
+    $assert_session->elementContains('css', 'tbody tr:nth-child(1) td:nth-child(2)', 'Yes');
+    $assert_session->elementContains('css', 'tbody tr:nth-child(1) td:nth-child(3)', 'Off');
 
     // Edit the poll.
     $this->clickLink($this->poll->label());
@@ -104,19 +103,15 @@ class PollVoteTest extends PollTestBase {
     $this->assertText('The poll ' . $this->poll->label() . ' has been updated.');
 
     // Check if the active label is correct.
-    $field_status = $this->xpath('//table/tbody/tr[1]');
-    $active = trim((string) $field_status[0]->td[1]);
     $date = \Drupal::service('date.formatter')->format($this->poll->getCreated() + 172800, 'short');
     $output = 'Yes (until ' . rtrim(strstr($date, '-', TRUE)) . ')';
-    $this->assertEqual($active, $output);
+    $assert_session->elementContains('css', 'tbody tr:nth-child(1) td:nth-child(2)', $output);
 
     // Check if allow anonymous voting is on.
-    $anonymous_votes = trim((string) $field_status[0]->td[2]);
-    $this->assertEqual($anonymous_votes, 'On');
+    $assert_session->elementContains('css', 'tbody tr:nth-child(1) td:nth-child(3)', 'On');
 
     // Check the number of total votes.
-    $total_votes = trim((string) $field_status[0]->td[4]);
-    $this->assertEqual($total_votes, '1');
+    $assert_session->elementContains('css', 'tbody tr:nth-child(1) td:nth-child(5)', '1');
 
     // Add permissions to anonymous user to view polls.
     /** @var \Drupal\user\RoleInterface $anonymous_role */
@@ -148,9 +143,39 @@ class PollVoteTest extends PollTestBase {
   }
 
   /**
+   * Test closed poll with "Cancel vote" button.
+   */
+  public function testClosedPollVoteCancel() {
+    /** @var PollInterface $poll */
+    $poll = $this->pollCreate();
+    $this->drupalLogin($this->web_user);
+    $choices = $poll->choice->getValue();
+    $this->drupalGet('poll/' . $poll->id());
+    // Vote on a poll.
+    $edit = array(
+      'choice' => $choices[0]['target_id'],
+    );
+    $this->drupalPostForm(NULL, $edit, t('Vote'));
+    $elements = $this->xpath('//input[@value="Cancel vote"]');
+    $this->assertTrue(isset($elements[0]), "'Cancel your vote' button appears.");
+    // Close a poll.
+    $this->drupalLogin($this->admin_user);
+    $this->drupalGet('poll/' . $poll->id() . '/edit');
+    $edit = [
+      'status[value]' => FALSE,
+    ];
+    $this->drupalPostForm(NULL, $edit, t('Save'));
+    // Check closed poll with "Cancel vote" button.
+    $this->drupalLogin($this->web_user);
+    $this->drupalGet('poll/' . $poll->id());
+    $elements = $this->xpath('//input[@value="Cancel vote"]');
+    $this->assertFalse(isset($elements[0]), "'Cancel your vote' button not appears.");
+  }
+
+  /**
    * Test that anonymous user just remove it's own vote.
    */
-  protected function testAnonymousCancelVote() {
+  public function testAnonymousCancelVote() {
     // Now grant anonymous users permission to view the polls, vote and delete
     // it's own vote.
     user_role_grant_permissions(RoleInterface::ANONYMOUS_ID, array('cancel own vote', 'access polls'));
@@ -171,19 +196,19 @@ class PollVoteTest extends PollTestBase {
     // Logged user votes.
     $this->drupalLogin($this->web_user);
     $this->drupalPostForm('poll/' . $this->poll->id(), $edit, t('Vote'));
-    $this->assertText(t('Total votes:  @votes', array('@votes' => 2)), 'Vote did correctly.');
+    $this->assertText(t('Total votes:  @votes', array('@votes' => 2)));
 
     // Second anonymous user votes from same IP than the logged.
     $this->drupalLogout();
     $this->drupalPostForm('poll/' . $this->poll->id(), $edit, t('Vote'));
-    $this->assertText(t('Total votes:  @votes', array('@votes' => 3)), 'Vote did correctly.');
+    $this->assertText(t('Total votes:  @votes', array('@votes' => 3)));
 
     // Second anonymous user cancels own vote.
     $this->drupalPostForm(NULL, array(), t('Cancel vote'));
 
     // Vote again to see the results, resulting in three votes again.
     $this->drupalPostForm('poll/' . $this->poll->id(), $edit, t('Vote'));
-    $this->assertText(t('Total votes:  @votes', array('@votes' => 3)), 'Just your vote deleted.');
+    $this->assertText(t('Total votes:  @votes', array('@votes' => 3)));
   }
 
 }

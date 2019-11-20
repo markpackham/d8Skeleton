@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\poll\Tests;
+namespace Drupal\Tests\poll\Functional;
 
 /**
  * Tests the poll field UI.
@@ -36,7 +36,7 @@ class PollFieldUITest extends PollTestBase {
   /**
    * Test if 'Manage fields' page is visible in the poll's settings UI.
    */
-  protected function testPollFieldUI() {
+  public function testPollFieldUI() {
 
     $this->drupalLogin($this->admin_user);
     $this->drupalGet('admin/config/content/poll');
@@ -44,7 +44,7 @@ class PollFieldUITest extends PollTestBase {
 
     // Check if 'Manage fields' tab appears in the poll's settings page.
     $this->assertUrl('admin/config/content/poll');
-    $xpath = '///div/main/aside/div/div/nav/ul/li[2]/a';
+    $xpath = '//div/main/aside/div/div/nav/ul/li[2]/a';
     $this->assertFieldByXPath($xpath, 'Manage fields');
 
     // Ensure that the 'Manage display' page is visible.

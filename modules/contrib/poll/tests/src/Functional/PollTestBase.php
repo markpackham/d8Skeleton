@@ -1,15 +1,15 @@
 <?php
 
-namespace Drupal\poll\Tests;
+namespace Drupal\Tests\poll\Functional;
 
 use Drupal\poll\PollInterface;
-use Drupal\simpletest\WebTestBase;
+use Drupal\Tests\BrowserTestBase;
 use InvalidArgumentException;
 
 /**
  * Defines a base class for testing the Poll module.
  */
-abstract class PollTestBase extends WebTestBase {
+abstract class PollTestBase extends BrowserTestBase {
 
   /**
    * @var \Drupal\user\UserInterface
@@ -119,7 +119,7 @@ abstract class PollTestBase extends WebTestBase {
       ->getStorage('poll')
       ->loadByProperties(array('question' => $question));
     $poll = reset($polls);
-    $this->assertText(t('The poll @question has been added.', array('@question' => $question)), 'Poll has been created.');
+    $this->assertText(t('The poll @question has been added.', array('@question' => $question)));
     $this->assertTrue($poll->id, 'Poll has been found in the database.');
 
     return $poll instanceof PollInterface ? $poll : FALSE;
@@ -200,10 +200,7 @@ abstract class PollTestBase extends WebTestBase {
     foreach ($choices as $id => $label) {
       if ($id < $index) {
         // Directly assert the weight form element value for this choice.
-        $this->assertFieldByName('choice[' . $id . '][_weight]', $weight, format_string('Found choice @id with weight @weight.', array(
-          '@id' => $id,
-          '@weight' => $weight,
-        )));
+        $this->assertFieldByName('choice[' . $id . '][_weight]', $weight);
         // The expected weight of each choice is higher than the previous one.
         $weight++;
         // Append to our (to be reversed) stack of labels.

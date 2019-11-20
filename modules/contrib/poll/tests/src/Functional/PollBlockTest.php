@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\poll\Tests;
+namespace Drupal\Tests\poll\Functional;
 
 /**
  * Tests the recent poll block.
@@ -40,7 +40,7 @@ class PollBlockTest extends PollTestBase {
     $this->assertText($poll->label());
     $options = $poll->getOptions();
     foreach ($options as $option) {
-      $this->assertText($option, 'Poll option appears in block.');
+      $this->assertText($option);
     }
 
     // Verify we can vote via the block.
@@ -48,13 +48,13 @@ class PollBlockTest extends PollTestBase {
       'choice' => '1',
     );
     $this->drupalPostForm('user/' . $this->web_user->id(), $edit, t('Vote'));
-    $this->assertText('Your vote has been recorded.', 'Your vote has been recorded.');
-    $this->assertText('Total votes:  1', 'Vote count updated correctly.');
+    $this->assertText('Your vote has been recorded.');
+    $this->assertText('Total votes:  1');
 
     // Close the poll and verify block doesn't appear.
     $poll->close();
     $poll->save();
     $this->drupalGet('user/' . $user->id());
-    $this->assertNoText($poll->label(), 'Poll no longer appears in block.');
+    $this->assertNoText($poll->label());
   }
 }

@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\poll\Tests;
+namespace Drupal\Tests\poll\Functional;
 
 use Drupal\Core\Session\AccountInterface;
 use Drupal\language\Entity\ConfigurableLanguage;
@@ -53,7 +53,7 @@ class PollVoteMultilingualTest extends PollTestBase {
   /**
    * Tests multilingual voting on a poll.
    */
-  protected function testPollVoteMultilingual() {
+  public function testPollVoteMultilingual() {
 
     $this->drupalLogin($this->admin_user);
 
@@ -97,8 +97,8 @@ class PollVoteMultilingualTest extends PollTestBase {
       'choice' => $this->getChoiceId($this->poll, 2),
     );
     $this->drupalPostForm('poll/' . $this->poll->id(), $edit, t('Vote'));
-    $this->assertText('Your vote has been recorded.', 'Your vote was recorded.');
-    $this->assertText('Total votes:  1', 'Vote count updated correctly.');
+    $this->assertText('Your vote has been recorded.');
+    $this->assertText('Total votes:  1');
 
     $this->drupalGet('ca/poll/' . $this->poll->id());
     $elements = $this->xpath('//input[@value="Cancel vote"]');
@@ -106,16 +106,16 @@ class PollVoteMultilingualTest extends PollTestBase {
 
     // Cancel a vote.
     $this->drupalPostForm('poll/' . $this->poll->id(), array(), t('Cancel vote'));
-    $this->assertText('Your vote was cancelled.', 'Your vote was cancelled.');
-    $this->assertNoText('Cancel your vote', "Cancel vote button doesn't appear.");
+    $this->assertText('Your vote was cancelled.');
+    $this->assertNoText('Cancel your vote');
 
     // Vote again in reverse order.
     $edit = array(
       'choice' => $this->getChoiceIdByLabel($this->poll->getTranslation('ca'), 'ca choice 2'),
     );
     $this->drupalPostForm('ca/poll/' . $this->poll->id(), $edit, t('Vote'));
-    $this->assertText('Your vote has been recorded.', 'Your vote was recorded.');
-    $this->assertText('Total votes:  1', 'Vote count updated correctly.');
+    $this->assertText('Your vote has been recorded.');
+    $this->assertText('Total votes:  1');
 
     $this->drupalGet('poll/' . $this->poll->id());
     $elements = $this->xpath('//input[@value="Cancel vote"]');
@@ -149,23 +149,23 @@ class PollVoteMultilingualTest extends PollTestBase {
       'choice' => $this->getChoiceIdByLabel($this->poll->getTranslation('ca'), 'ca choice 4'),
     );
     $this->drupalPostForm('ca/poll/' . $this->poll->id(), $edit, t('Vote'));
-    $this->assertText('Your vote has been recorded.', 'Your vote was recorded.');
-    $this->assertText('Total votes:  2', 'Vote count updated correctly.');
+    $this->assertText('Your vote has been recorded.');
+    $this->assertText('Total votes:  2');
     $this->assertNoText('ca choice 1');
     $this->assertText('ca choice 4');
     $elements = $this->xpath('//*[@id="poll-view-form-2"]/div[1]/dl/dd[1]')[0];
-    $this->assertEqual($elements->div[1], '50% (1 vote)');
+    $this->assertEqual($elements->getText(), '50% (1 vote)');
     $elements = $this->xpath('//*[@id="poll-view-form-2"]/div[1]/dl/dd[3]')[0];
-    $this->assertEqual($elements->div[1], '50% (1 vote)');
+    $this->assertEqual($elements->getText(), '50% (1 vote)');
 
     $this->drupalGet('poll/' . $this->poll->id());
     $elements = $this->xpath('//input[@value="Cancel vote"]');
     $this->assertTrue(isset($elements[0]), "'Cancel vote' button appears.");
-    $this->assertText('Total votes:  2', 'Vote count updated correctly.');
+    $this->assertText('Total votes:  2');
     $elements = $this->xpath('//*[@id="poll-view-form-2"]/div[1]/dl/dd[1]')[0];
-    $this->assertEqual($elements->div[1], '50% (1 vote)');
+    $this->assertEqual($elements->getText(), '50% (1 vote)');
     $elements = $this->xpath('//*[@id="poll-view-form-2"]/div[1]/dl/dd[3]')[0];
-    $this->assertEqual($elements->div[1], '50% (1 vote)');
+    $this->assertEqual($elements->getText(), '50% (1 vote)');
   }
 
 }

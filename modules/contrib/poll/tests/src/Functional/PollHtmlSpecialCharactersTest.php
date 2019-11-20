@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\poll\Tests;
+namespace Drupal\Tests\poll\Functional;
 
 /**
  * Check that HTML special characters are displayed correctly.
@@ -34,7 +34,7 @@ class PollHtmlSpecialCharactersTest extends PollTestBase {
 
     // Verify the page title.
     $result = $this->xpath("//div[contains(concat(' ', @class, ' '), ' block-page-title-block ')]/h1");
-    $this->assertEqual($this->page_title, (string) $result[0], 'HTML entities displayed correctly in page title.');
+    $this->assertEqual($this->page_title, $result[0]->getText(), 'HTML entities displayed correctly in page title.');
   }
 
   /**
@@ -52,15 +52,15 @@ class PollHtmlSpecialCharactersTest extends PollTestBase {
 
     // Verify the updated choice.
     $result = $this->xpath("//div[@id='edit-choice']/div[1]/label/text()");
-    $this->assertEqual($this->special_choice, (string) $result[0], 'HTML entities displayed correctly in choice option.');
+    $this->assertEqual($this->special_choice, $result[0]->getText(), 'HTML entities displayed correctly in choice option.');
 
     // Vote.
     $this->drupalPostForm('poll/' . $this->poll->id(), ['choice' => 1], t('Vote'));
-    $this->assertText('Your vote has been recorded.', 'Your vote was recorded.');
-    $this->assertText('Total votes:  1', 'Total votes is correct.');
+    $this->assertText('Your vote has been recorded.');
+    $this->assertText('Total votes:  1');
 
     // Verify the results page.
     $result = $this->xpath('//*[@id="poll-view-form-1"]/div/dl/dt[1]/text()');
-    $this->assertEqual($this->special_choice, (string) $result[0], 'HTML entities displayed correctly in vote results.');
+    $this->assertEqual($this->special_choice, $result[0]->getText(), 'HTML entities displayed correctly in vote results.');
   }
 }

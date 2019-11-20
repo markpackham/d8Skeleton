@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\poll\Tests;
+namespace Drupal\Tests\poll\Functional;
 
 /**
  * Tests the removal of poll choices.
@@ -29,7 +29,7 @@ class PollDeleteChoiceTest extends PollTestBase {
 
     // Assert the selected option.
     $xml = $this->xpath('//dt[text()=:choice]/following-sibling::dd[1]/div', [':choice' => $this->poll->choice[1]->entity->label()]);
-    $this->assertEqual(1, $xml[0]['data-value']);
+    $this->assertEqual(1, $xml[0]->getAttribute('data-value'));
 
     // Edit the poll, and try to delete first poll choice.
     $this->drupalGet("poll/" . $this->poll->id() . "/edit");
@@ -41,9 +41,9 @@ class PollDeleteChoiceTest extends PollTestBase {
     $this->clickLink($this->poll->label());
 
     // Check the first poll choice is deleted, while the others remain.
-    $this->assertNoText($this->poll->choice[0]->entity->label(), 'First choice removed.');
-    $this->assertText($this->poll->choice[1]->entity->label(), 'Second choice remains.');
-    $this->assertText($this->poll->choice[2]->entity->label(), 'Third choice remains.');
+    $this->assertNoText($this->poll->choice[0]->entity->label());
+    $this->assertText($this->poll->choice[1]->entity->label());
+    $this->assertText($this->poll->choice[2]->entity->label());
 
     $ids = \Drupal::entityQuery('poll_choice')
       ->condition('choice', $this->poll->choice[0]->entity->label())
@@ -58,7 +58,7 @@ class PollDeleteChoiceTest extends PollTestBase {
 
     // Assert the selected option.
     $xml = $this->xpath('//dt[text()=:choice]/following-sibling::dd[1]/div', [':choice' => $this->poll->choice[1]->entity->label()]);
-    $this->assertEqual(1, $xml[0]['data-value']);
+    $this->assertEqual(1, $xml[0]->getAttribute('data-value'));
 
     // Edit the poll, and try to delete first poll choice.
     $this->drupalGet("poll/" . $this->poll->id() . "/edit");
