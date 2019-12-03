@@ -1,15 +1,15 @@
 <?php
 
-namespace Drupal\block_class\Tests;
+namespace Drupal\Tests\block_class\Functional;
 
-use Drupal\simpletest\WebTestBase;
+use Drupal\Tests\BrowserTestBase;
 
 /**
  * Tests the custom CSS classes for blocks.
  *
  * @group block_class
  */
-class BlockClassTest extends WebTestBase {
+class BlockClassTest extends BrowserTestBase {
 
   /**
    * Modules to enable.
@@ -35,7 +35,7 @@ class BlockClassTest extends WebTestBase {
       'region' => 'content',
       'third_party_settings[block_class][classes]' => 'TestClass_content',
     ];
-    $this->drupalPostForm(NULL, $edit, $this->t('Save block'));
+    $this->drupalPostForm(NULL, $edit, t('Save block'));
 
     // Add a user account menu with a custom CSS class.
     $this->drupalGet('admin/structure/block/add/system_menu_block:account/classy', ['query' => ['region' => 'content']]);
@@ -43,7 +43,7 @@ class BlockClassTest extends WebTestBase {
       'region' => 'secondary_menu',
       'third_party_settings[block_class][classes]' => 'TestClass_menu',
     ];
-    $this->drupalPostForm(NULL, $edit, $this->t('Save block'));
+    $this->drupalPostForm(NULL, $edit, t('Save block'));
 
     // Go to the front page of the user.
     $this->drupalGet('<front>');
