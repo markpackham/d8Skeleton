@@ -151,7 +151,7 @@ class ExpressionBuilder
      *
      * @return Comparison
      */
-    public function memberOf($field, $value)
+    public function memberOf ($field, $value)
     {
         return new Comparison($field, Comparison::MEMBER_OF, new Value($value));
     }
@@ -176,5 +176,6 @@ class ExpressionBuilder
     public function endsWith($field, $value)
     {
         return new Comparison($field, Comparison::ENDS_WITH, new Value($value));
-    }
+    }    
+
 }

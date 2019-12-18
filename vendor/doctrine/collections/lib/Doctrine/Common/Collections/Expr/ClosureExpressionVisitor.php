@@ -70,16 +70,17 @@ class ClosureExpressionVisitor extends ExpressionVisitor
         }
 
         // camelcase field name to support different variable naming conventions
-        $ccField = preg_replace_callback('/_(.?)/', static function ($matches) {
-            return strtoupper($matches[1]);
-        }, $field);
+        $ccField   = preg_replace_callback('/_(.?)/', function($matches) { return strtoupper($matches[1]); }, $field);
 
         foreach ($accessors as $accessor) {
             $accessor .= $ccField;
 
-            if (method_exists($object, $accessor)) {
-                return $object->$accessor();
+
+            if ( ! method_exists($object, $accessor)) {
+                continue;
             }
+
+            return $object->$accessor();
         }
 
         return $object->$field;
@@ -188,6 +189,26 @@ class ClosureExpressionVisitor extends ExpressionVisitor
                 return static function ($object) use ($field, $value) : bool {
                     return $value === substr(ClosureExpressionVisitor::getObjectFieldValue($object, $field), -strlen($value));
                 };
+
+            case Comparison::MEMBER_OF:
+                return function ($object) use ($field, $value) {
+                    $fieldValues = ClosureExpressionVisitor::getObjectFieldValue($object, $field);
+                    if (!is_array($fieldValues)) {
+                        $fieldValues = iterator_to_array($fieldValues);
+                    }
+                    return in_array($value, $fieldValues);
+                };
+
+            case Comparison::STARTS_WITH:
+                return function ($object) use ($field, $value) {
+                    return 0 === strpos(ClosureExpressionVisitor::getObjectFieldValue($object, $field), $value);
+                };
+
+            case Comparison::ENDS_WITH:
+                return function ($object) use ($field, $value) {
+                    return $value === substr(ClosureExpressionVisitor::getObjectFieldValue($object, $field), -strlen($value));
+                };
+
 
             default:
                 throw new RuntimeException('Unknown comparison operator: ' . $comparison->getOperator());

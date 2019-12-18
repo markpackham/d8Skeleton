@@ -32,10 +32,10 @@ use function uasort;
  * serialize a collection use {@link toArray()} and reconstruct the collection
  * manually.
  *
- * @psalm-template TKey of array-key
- * @psalm-template T
- * @template-implements Collection<TKey,T>
- * @template-implements Selectable<TKey,T>
+ * @since  2.0
+ * @author Guilherme Blanco <guilhermeblanco@hotmail.com>
+ * @author Jonathan Wage <jonwage@gmail.com>
+ * @author Roman Borschel <roman@code-factory.org>
  */
 class ArrayCollection implements Collection, Selectable
 {
@@ -57,6 +57,21 @@ class ArrayCollection implements Collection, Selectable
     public function __construct(array $elements = [])
     {
         $this->elements = $elements;
+    }
+
+    /**
+     * Creates a new instance from the specified elements.
+     *
+     * This method is provided for derived classes to specify how a new
+     * instance should be created when constructor semantics have changed.
+     *
+     * @param array $elements Elements.
+     *
+     * @return static
+     */
+    protected function createFrom(array $elements)
+    {
+        return new static($elements);
     }
 
     /**
@@ -327,7 +342,7 @@ class ArrayCollection implements Collection, Selectable
      */
     public function filter(Closure $p)
     {
-        return $this->createFrom(array_filter($this->elements, $p, ARRAY_FILTER_USE_BOTH));
+        return $this->createFrom(array_filter($this->elements, $p));
     }
 
     /**
@@ -359,7 +374,7 @@ class ArrayCollection implements Collection, Selectable
             }
         }
 
-        return [$this->createFrom($matches), $this->createFrom($noMatches)];
+        return array($this->createFrom($matches), $this->createFrom($noMatches));
     }
 
     /**
@@ -402,12 +417,10 @@ class ArrayCollection implements Collection, Selectable
             $filtered = array_filter($filtered, $filter);
         }
 
-        $orderings = $criteria->getOrderings();
-
-        if ($orderings) {
+        if ($orderings = $criteria->getOrderings()) {
             $next = null;
             foreach (array_reverse($orderings) as $field => $ordering) {
-                $next = ClosureExpressionVisitor::sortByField($field, $ordering === Criteria::DESC ? -1 : 1, $next);
+                $next = ClosureExpressionVisitor::sortByField($field, $ordering == Criteria::DESC ? -1 : 1, $next);
             }
 
             uasort($filtered, $next);
