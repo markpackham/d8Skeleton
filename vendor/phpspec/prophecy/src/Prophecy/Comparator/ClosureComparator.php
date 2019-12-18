@@ -27,7 +27,7 @@ final class ClosureComparator extends Comparator
             && is_object($actual) && $actual instanceof \Closure;
     }
 
-    public function assertEquals($expected, $actual, $delta = 0.0, $canonicalize = false, $ignoreCase = false, array &$processed = array())
+    public function assertEquals($expected, $actual, $delta = 0.0, $canonicalize = false, $ignoreCase = false)
     {
         throw new ComparisonFailure(
             $expected,

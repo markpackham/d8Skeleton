@@ -144,7 +144,7 @@ class Reader
      */
     private function resolveStream()
     {
-        if ($this->fileType === 'application/x-gzip' || $this->fileType === 'application/gzip') {
+        if ($this->fileType === 'application/x-gzip') {
             return 'compress.zlib://';
         } elseif ($this->fileType === 'application/x-bzip2') {
             return 'compress.bzip2://';

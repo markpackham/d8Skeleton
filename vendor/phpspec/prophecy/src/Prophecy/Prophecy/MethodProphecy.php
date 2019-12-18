@@ -71,15 +71,15 @@ class MethodProphecy
         }
 
         if (version_compare(PHP_VERSION, '7.0', '>=') && true === $reflectedMethod->hasReturnType()) {
-            $type = PHP_VERSION_ID >= 70100 ? $reflectedMethod->getReturnType()->getName() : (string) $reflectedMethod->getReturnType();
+            $type = (string) $reflectedMethod->getReturnType();
 
             if ('void' === $type) {
                 $this->voidReturnType = true;
+                return;
             }
 
             $this->will(function () use ($type) {
                 switch ($type) {
-                    case 'void': return;
                     case 'string': return '';
                     case 'float':  return 0.0;
                     case 'int':    return 0;
@@ -164,7 +164,7 @@ class MethodProphecy
     /**
      * Sets return promise to the prophecy.
      *
-     * @see \Prophecy\Promise\ReturnPromise
+     * @see Prophecy\Promise\ReturnPromise
      *
      * @return $this
      */
@@ -181,45 +181,11 @@ class MethodProphecy
     }
 
     /**
-     * @param array $items
-     *
-     * @return $this
-     *
-     * @throws \Prophecy\Exception\InvalidArgumentException
-     */
-    public function willYield($items)
-    {
-        if ($this->voidReturnType) {
-            throw new MethodProphecyException(
-                "The method \"$this->methodName\" has a void return type, and so cannot yield anything",
-                $this
-            );
-        }
-
-        if (!is_array($items)) {
-            throw new InvalidArgumentException(sprintf(
-                'Expected array, but got %s.',
-                gettype($items)
-            ));
-        }
-
-        // Remove eval() when minimum version >=5.5
-        /** @var callable $generator */
-        $generator = eval('return function() use ($items) {
-            foreach ($items as $key => $value) {
-                yield $key => $value;
-            }
-        };');
-
-        return $this->will($generator);
-    }
-
-    /**
      * Sets return argument promise to the prophecy.
      *
      * @param int $index The zero-indexed number of the argument to return
      *
-     * @see \Prophecy\Promise\ReturnArgumentPromise
+     * @see Prophecy\Promise\ReturnArgumentPromise
      *
      * @return $this
      */
@@ -235,7 +201,7 @@ class MethodProphecy
     /**
      * Sets throw promise to the prophecy.
      *
-     * @see \Prophecy\Promise\ThrowPromise
+     * @see Prophecy\Promise\ThrowPromise
      *
      * @param string|\Exception $exception Exception class or instance
      *
@@ -277,7 +243,7 @@ class MethodProphecy
     /**
      * Sets call prediction to the prophecy.
      *
-     * @see \Prophecy\Prediction\CallPrediction
+     * @see Prophecy\Prediction\CallPrediction
      *
      * @return $this
      */
@@ -289,7 +255,7 @@ class MethodProphecy
     /**
      * Sets no calls prediction to the prophecy.
      *
-     * @see \Prophecy\Prediction\NoCallsPrediction
+     * @see Prophecy\Prediction\NoCallsPrediction
      *
      * @return $this
      */
@@ -301,7 +267,7 @@ class MethodProphecy
     /**
      * Sets call times prediction to the prophecy.
      *
-     * @see \Prophecy\Prediction\CallTimesPrediction
+     * @see Prophecy\Prediction\CallTimesPrediction
      *
      * @param $count
      *
@@ -310,18 +276,6 @@ class MethodProphecy
     public function shouldBeCalledTimes($count)
     {
         return $this->should(new Prediction\CallTimesPrediction($count));
-    }
-
-    /**
-     * Sets call times prediction to the prophecy.
-     *
-     * @see \Prophecy\Prediction\CallTimesPrediction
-     *
-     * @return $this
-     */
-    public function shouldBeCalledOnce()
-    {
-        return $this->shouldBeCalledTimes(1);
     }
 
     /**
@@ -370,7 +324,7 @@ class MethodProphecy
     /**
      * Checks call prediction.
      *
-     * @see \Prophecy\Prediction\CallPrediction
+     * @see Prophecy\Prediction\CallPrediction
      *
      * @return $this
      */
@@ -382,7 +336,7 @@ class MethodProphecy
     /**
      * Checks no calls prediction.
      *
-     * @see \Prophecy\Prediction\NoCallsPrediction
+     * @see Prophecy\Prediction\NoCallsPrediction
      *
      * @return $this
      */
@@ -394,7 +348,7 @@ class MethodProphecy
     /**
      * Checks no calls prediction.
      *
-     * @see \Prophecy\Prediction\NoCallsPrediction
+     * @see Prophecy\Prediction\NoCallsPrediction
      * @deprecated
      *
      * @return $this
@@ -407,7 +361,7 @@ class MethodProphecy
     /**
      * Checks call times prediction.
      *
-     * @see \Prophecy\Prediction\CallTimesPrediction
+     * @see Prophecy\Prediction\CallTimesPrediction
      *
      * @param int $count
      *
@@ -416,18 +370,6 @@ class MethodProphecy
     public function shouldHaveBeenCalledTimes($count)
     {
         return $this->shouldHave(new Prediction\CallTimesPrediction($count));
-    }
-
-    /**
-     * Checks call times prediction.
-     *
-     * @see \Prophecy\Prediction\CallTimesPrediction
-     *
-     * @return $this
-     */
-    public function shouldHaveBeenCalledOnce()
-    {
-        return $this->shouldHaveBeenCalledTimes(1);
     }
 
     /**

@@ -9,8 +9,8 @@
 
 namespace PHP_CodeSniffer\Standards\Squiz\Sniffs\CSS;
 
-use PHP_CodeSniffer\Files\File;
 use PHP_CodeSniffer\Sniffs\Sniff;
+use PHP_CodeSniffer\Files\File;
 
 class NamedColoursSniff implements Sniff
 {
@@ -21,6 +21,7 @@ class NamedColoursSniff implements Sniff
      * @var array
      */
     public $supportedTokenizers = ['CSS'];
+
 
     /**
      * A list of named colours.
