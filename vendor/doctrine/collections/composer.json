@@ -1,14 +1,9 @@
 {
     "name": "doctrine/collections",
     "type": "library",
-    "description": "PHP Doctrine Collections library that adds additional functionality on top of PHP arrays.",
-    "keywords": [
-        "php",
-        "collections",
-        "array",
-        "iterators"
-    ],
-    "homepage": "https://www.doctrine-project.org/projects/collections.html",
+    "description": "Collections Abstraction library",
+    "keywords": ["collections", "array", "iterator"],
+    "homepage": "http://www.doctrine-project.org",
     "license": "MIT",
     "authors": [
         {"name": "Guilherme Blanco", "email": "guilhermeblanco@gmail.com"},
@@ -25,12 +20,7 @@
         "doctrine/coding-standard": "~0.1@dev"
     },
     "autoload": {
-        "psr-4": { "Doctrine\\Common\\Collections\\": "lib/Doctrine/Common/Collections" }
-    },
-    "autoload-dev": {
-        "psr-4": {
-            "Doctrine\\Tests\\": "tests/Doctrine/Tests"
-        }
+        "psr-0": { "Doctrine\\Common\\Collections\\": "lib/" }
     },
     "autoload-dev": {
         "psr-4": {
