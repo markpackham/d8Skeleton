@@ -1,13 +1,12 @@
 <?php
 
-namespace Drupal\diff\Tests;
+namespace Drupal\Tests\diff\Functional;
 
 use Drupal\comment\Plugin\Field\FieldType\CommentItemInterface;
 use Drupal\comment\Tests\CommentTestTrait;
 use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\link\LinkItemInterface;
-use Drupal\Tests\diff\Functional\CoreVersionUiTestTrait;
 
 /**
  * Tests the Diff module plugins.
@@ -20,26 +19,11 @@ class DiffPluginVariousTest extends DiffPluginTestBase {
   use CoreVersionUiTestTrait;
 
   /**
-   * Modules to enable.
-   *
-   * @var array
+   * {@inheritdoc}
    */
-  public static $modules = [
+  protected static $modules = [
     'comment',
   ];
-
-  /**
-   * Tests the module plugins.
-   */
-  public function testPlugins() {
-    $this->doTestCommentPlugin();
-    $this->doTestCorePlugin();
-    $this->doTestCorePluginTimestampField();
-    $this->doTestLinkPlugin();
-    $this->doTestListPlugin();
-    $this->doTestTextPlugin();
-    $this->doTestTextWithSummaryPlugin();
-  }
 
   /**
    * Adds a text field.
@@ -79,7 +63,7 @@ class DiffPluginVariousTest extends DiffPluginTestBase {
    *
    * @covers \Drupal\diff\Plugin\diff\Field\CommentFieldBuilder
    */
-  public function doTestCommentPlugin() {
+  public function testCommentPlugin() {
     // Add the comment field to articles.
     $this->addDefaultCommentField('node', 'article');
 
@@ -113,7 +97,7 @@ class DiffPluginVariousTest extends DiffPluginTestBase {
    *
    * @covers \Drupal\diff\Plugin\diff\Field\CoreFieldBuilder
    */
-  public function doTestCorePlugin() {
+  public function testCorePlugin() {
     // Add an email field (supported by the Diff core plugin) to the Article
     // content type.
     $field_name = 'field_email';
@@ -165,7 +149,7 @@ class DiffPluginVariousTest extends DiffPluginTestBase {
    *
    * @covers \Drupal\diff\Plugin\diff\Field\CoreFieldBuilder
    */
-  public function doTestCorePluginTimestampField() {
+  public function testCorePluginTimestampField() {
     // Add a timestamp field (supported by the Diff core plugin) to the Article
     // content type.
     $field_name = 'field_timestamp';
@@ -223,7 +207,7 @@ class DiffPluginVariousTest extends DiffPluginTestBase {
    *
    * @covers \Drupal\diff\Plugin\diff\Field\LinkFieldBuilder
    */
-  public function doTestLinkPlugin() {
+  public function testLinkPlugin() {
     // Add a link field to the article content type.
     $field_name = 'field_link';
     $field_storage = FieldStorageConfig::create([
@@ -254,11 +238,10 @@ class DiffPluginVariousTest extends DiffPluginTestBase {
       ->save();
 
     // Enable the comparison of the link's title field.
-    $config = \Drupal::configFactory()->getEditable('diff.plugins');
-    $settings['compare_title'] = TRUE;
-    $config->set('fields.node.field_link.type', 'link_field_diff_builder');
-    $config->set('fields.node.field_link.settings', $settings);
-    $config->save();
+    $this->config('diff.plugins')
+      ->set('fields.node.field_link.type', 'link_field_diff_builder')
+      ->set('fields.node.field_link.settings', ['compare_title' => TRUE])
+      ->save();
 
     // Create an article, setting values on the link field.
     $node = $this->drupalCreateNode([
@@ -293,7 +276,7 @@ class DiffPluginVariousTest extends DiffPluginTestBase {
    *
    * @covers \Drupal\diff\Plugin\diff\Field\ListFieldBuilder
    */
-  public function doTestListPlugin() {
+  public function testListPlugin() {
     // Add a list field to the article content type.
     $field_name = 'field_list';
     $field_storage = FieldStorageConfig::create([
@@ -352,7 +335,7 @@ class DiffPluginVariousTest extends DiffPluginTestBase {
    *
    * @covers \Drupal\diff\Plugin\diff\Field\TextFieldBuilder
    */
-  public function doTestTextPlugin() {
+  public function testTextPlugin() {
     // Add a text and a text long field to the Article content type.
     $this->addArticleTextField('field_text', 'Text Field', 'string', 'string_textfield');
     $this->addArticleTextField('field_text_long', 'Text Long Field', 'string_long', 'string_textarea');
@@ -389,7 +372,7 @@ class DiffPluginVariousTest extends DiffPluginTestBase {
    *
    * @covers \Drupal\diff\Plugin\diff\Field\TextWithSummaryFieldBuilder
    */
-  public function doTestTextWithSummaryPlugin() {
+  public function testTextWithSummaryPlugin() {
     // Enable the comparison of the summary.
     $config = \Drupal::configFactory()->getEditable('diff.plugins');
     $settings['compare_summary'] = TRUE;

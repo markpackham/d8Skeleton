@@ -1,10 +1,9 @@
 <?php
 
-namespace Drupal\diff\Tests;
+namespace Drupal\Tests\diff\Functional;
 
 use Drupal\language\Entity\ConfigurableLanguage;
-use Drupal\system\Tests\Menu\AssertBreadcrumbTrait;
-use Drupal\Tests\diff\Functional\CoreVersionUiTestTrait;
+use Drupal\Tests\system\Functional\Menu\AssertBreadcrumbTrait;
 
 /**
  * Tests the diff revisions overview.
@@ -17,30 +16,23 @@ class DiffRevisionTest extends DiffTestBase {
   use CoreVersionUiTestTrait;
 
   /**
-   * Modules to enable.
-   *
-   * @var array
+   * {@inheritdoc}
    */
-  public static $modules = [
+  protected $defaultTheme = 'classy';
+
+  /**
+   * {@inheritdoc}
+   */
+  protected static $modules = [
     'diff_test',
     'content_translation',
     'field_ui',
   ];
 
   /**
-   * Run all test fragments.
-   */
-  public function testAll() {
-    $this->doTestRevisionDiffOverview();
-    $this->doTestOverviewPager();
-    $this->doTestRevisionOverviewErrorMessages();
-    $this->doTestEntityReference();
-  }
-
-  /**
    * Tests the revision diff overview.
    */
-  protected function doTestRevisionDiffOverview() {
+  public function testRevisionDiffOverview() {
     $this->drupalPlaceBlock('system_breadcrumb_block');
     // Login as admin with the required permission.
     $this->loginAsAdmin(['delete any article content']);
@@ -60,9 +52,6 @@ class DiffRevisionTest extends DiffTestBase {
     $this->drupalPostNodeForm('node/add/article', $edit, t('Save and publish'));
     $node = $this->drupalGetNodeByTitle($title);
     $this->drupalGet('node/' . $node->id());
-
-    // Make sure the revision tab doesn't exist.
-    $this->assertNoLink('Revisions');
 
     // Create a second revision, with a revision comment.
     $this->drupalGet('node/add/article');
@@ -103,18 +92,18 @@ class DiffRevisionTest extends DiffTestBase {
     $this->assertText('Body');
     $rows = $this->xpath('//tbody/tr');
     $head = $this->xpath('//thead/tr');
-    $diff_row = $rows[1]->td;
+    $diff_row = $rows[1]->findAll('xpath', '/td');
     // Assert the revision comment.
     $this->assertRaw('diff-revision__item-message">Revision 2 comment');
     // Assert changes made to the body, text 1 changed to 2.
-    $this->assertEqual((string) ($diff_row[0]), '1');
-    $this->assertEqual((string) ($diff_row[1]), '-');
-    $this->assertEqual((string) (($diff_row[2]->span)), '1');
-    $this->assertEqual(htmlspecialchars_decode(strip_tags($diff_row[2]->asXML())), '<p>Revision 1</p>');
-    $this->assertEqual((string) ($diff_row[3]), '1');
-    $this->assertEqual((string) ($diff_row[4]), '+');
-    $this->assertEqual((string) (($diff_row[5]->span)), '2');
-    $this->assertEqual(htmlspecialchars_decode((strip_tags($diff_row[5]->asXML()))), '<p>Revision 2</p>');
+    $this->assertEqual($diff_row[0]->getText(), '1');
+    $this->assertEqual($diff_row[1]->getText(), '-');
+    $this->assertEqual($diff_row[2]->find('xpath', 'span')->getText(), '1');
+    $this->assertEqual(htmlspecialchars_decode(strip_tags($diff_row[2]->getHtml())), '<p>Revision 1</p>');
+    $this->assertEqual($diff_row[3]->getText(), '1');
+    $this->assertEqual($diff_row[4]->getText(), '+');
+    $this->assertEqual($diff_row[5]->find('xpath', 'span')->getText(), '2');
+    $this->assertEqual(htmlspecialchars_decode((strip_tags($diff_row[5]->getHtml()))), '<p>Revision 2</p>');
 
     // Compare the revisions in markdown mode.
     $this->clickLink('Strip tags');
@@ -128,14 +117,14 @@ class DiffRevisionTest extends DiffTestBase {
     ];
     $this->assertBreadcrumb(NULL, $trail);
     // Extract the changes.
-    $diff_row = $rows[1]->td;
+    $diff_row = $rows[1]->findAll('xpath', '/td');
     // Assert changes made to the body, text 1 changed to 2.
-    $this->assertEqual((string) ($diff_row[0]), '-');
-    $this->assertEqual((string) (($diff_row[1]->span)), '1');
-    $this->assertEqual(htmlspecialchars_decode(strip_tags($diff_row[1]->asXML())), 'Revision 1');
-    $this->assertEqual((string) (($diff_row[2])), '+');
-    $this->assertEqual((string) (($diff_row[3]->span)), '2');
-    $this->assertEqual(htmlspecialchars_decode((strip_tags($diff_row[3]->asXML()))), 'Revision 2');
+    $this->assertEqual($diff_row[0]->getText(), '-');
+    $this->assertEqual($diff_row[1]->find('xpath', 'span')->getText(), '1');
+    $this->assertEqual(htmlspecialchars_decode(trim(strip_tags($diff_row[1]->getHtml()))), 'Revision 1');
+    $this->assertEqual($diff_row[2]->getText(), '+');
+    $this->assertEqual($diff_row[3]->find('xpath', 'span')->getText(), '2');
+    $this->assertEqual(htmlspecialchars_decode(trim(strip_tags($diff_row[3]->getHtml()))), 'Revision 2');
 
     // Compare the revisions in single column mode.
     $this->clickLink('Unified fields');
@@ -149,42 +138,42 @@ class DiffRevisionTest extends DiffTestBase {
     $this->assertBreadcrumb(NULL, $trail);
     // Extract the changes.
     $rows = $this->xpath('//tbody/tr');
-    $diff_row = $rows[1]->td;
+    $diff_row = $rows[1]->findAll('xpath', '/td');
     // Assert changes made to the body, text 1 changed to 2.
-    $this->assertEqual((string) ($diff_row[0]), '1');
-    $this->assertEqual((string) ($diff_row[1]), '');
-    $this->assertEqual((string) ($diff_row[2]), '-');
-    $this->assertEqual((string) (($diff_row[3]->span)), '1');
-    $this->assertEqual(htmlspecialchars_decode(strip_tags($diff_row[3]->asXML())), '<p>Revision 1</p>');
-    $diff_row = $rows[2]->td;
-    $this->assertEqual((string) ($diff_row[0]), '');
-    $this->assertEqual((string) ($diff_row[1]), '1');
-    $this->assertEqual((string) (($diff_row[2])), '+');
-    $this->assertEqual((string) (($diff_row[3]->span)), '2');
-    $this->assertEqual(htmlspecialchars_decode((strip_tags($diff_row[3]->asXML()))), '<p>Revision 2</p>');
+    $this->assertEqual($diff_row[0]->getText(), '1');
+    $this->assertEqual($diff_row[1]->getText(), '');
+    $this->assertEqual($diff_row[2]->getText(), '-');
+    $this->assertEqual($diff_row[3]->find('xpath', 'span')->getText(), '1');
+    $this->assertEqual(htmlspecialchars_decode(strip_tags($diff_row[3]->getHtml())), '<p>Revision 1</p>');
+    $diff_row = $rows[2]->findAll('xpath', '/td');
+    $this->assertEqual($diff_row[0]->getText(), '');
+    $this->assertEqual($diff_row[1]->getText(), '1');
+    $this->assertEqual($diff_row[2]->getText(), '+');
+    $this->assertEqual($diff_row[3]->find('xpath', 'span')->getText(), '2');
+    $this->assertEqual(htmlspecialchars_decode(strip_tags($diff_row[3]->getHtml())), '<p>Revision 2</p>');
     $this->assertUniqueText('first_unique_text');
     $this->assertUniqueText('second_unique_text');
-    $diff_row = $rows[3]->td;
-    $this->assertEqual((string) ($diff_row[0]), '2');
-    $this->assertEqual((string) ($diff_row[1]), '2');
-    $diff_row = $rows[4]->td;
-    $this->assertEqual((string) ($diff_row[0]), '3');
-    $this->assertEqual((string) ($diff_row[1]), '3');
+    $diff_row = $rows[3]->findAll('xpath', '/td');
+    $this->assertEqual($diff_row[0]->getText(), '2');
+    $this->assertEqual($diff_row[1]->getText(), '2');
+    $diff_row = $rows[4]->findAll('xpath', '/td');
+    $this->assertEqual($diff_row[0]->getText(), '3');
+    $this->assertEqual($diff_row[1]->getText(), '3');
 
     $this->clickLink('Strip tags');
     // Extract the changes.
     $rows = $this->xpath('//tbody/tr');
-    $diff_row = $rows[1]->td;
+    $diff_row = $rows[1]->findAll('xpath', '/td');
 
     // Assert changes made to the body, with strip_tags filter and make sure
     // there are no line numbers.
-    $this->assertEqual((string) ($diff_row[0]), '-');
-    $this->assertEqual((string) (($diff_row[1]->span)), '1');
-    $this->assertEqual(htmlspecialchars_decode(strip_tags($diff_row[1]->asXML())), 'Revision 1');
-    $diff_row = $rows[2]->td;
-    $this->assertEqual((string) (($diff_row[0])), '+');
-    $this->assertEqual((string) (($diff_row[1]->span)), '2');
-    $this->assertEqual(htmlspecialchars_decode((strip_tags($diff_row[1]->asXML()))), 'Revision 2');
+    $this->assertEqual($diff_row[0]->getText(), '-');
+    $this->assertEqual($diff_row[1]->find('xpath', 'span')->getText(), '1');
+    $this->assertEqual(htmlspecialchars_decode(trim(strip_tags($diff_row[1]->getHtml()))), 'Revision 1');
+    $diff_row = $rows[2]->findAll('xpath', '/td');
+    $this->assertEqual($diff_row[0]->getText(), '+');
+    $this->assertEqual($diff_row[1]->find('xpath', 'span')->getText(), '2');
+    $this->assertEqual(htmlspecialchars_decode(trim(strip_tags($diff_row[1]->getHtml()))), 'Revision 2');
 
     $this->drupalGet('node/' . $node->id());
     $this->clickLink(t('Revisions'));
@@ -256,14 +245,11 @@ class DiffRevisionTest extends DiffTestBase {
     $this->drupalPostForm(NULL, $edit, t('Compare selected revisions'));
     $this->clickLink('Strip tags');
     // Check markdown layout is used when navigating between revisions.
-    $rows = $this->xpath('//tbody/tr');
-    $diff_row = $rows[3]->td;
-    $this->assertEqual(htmlspecialchars_decode(strip_tags($diff_row[3]->asXML())), 'new body');
+    $assert_session = $this->assertSession();
+    $assert_session->elementTextContains('css', 'tr:nth-child(4) td:nth-child(4)', 'new body');
     $this->clickLink('Next change');
     // The filter should be the same as the previous screen.
-    $rows = $this->xpath('//tbody/tr');
-    $diff_row = $rows[3]->td;
-    $this->assertEqual(htmlspecialchars_decode(strip_tags($diff_row[3]->asXML())), 'newer body');
+    $assert_session->elementTextContains('css', 'tr:nth-child(4) td:nth-child(4)', 'newer body');
 
     // Get the node, create a new revision that is not the current one.
     $node = $this->getNodeByTitle('newer test title');
@@ -279,7 +265,7 @@ class DiffRevisionTest extends DiffTestBase {
     // Check that the last revision is not the current one.
     $this->assertLink(t('Set as current revision'));
     $text = $this->xpath('//tbody/tr[2]/td[4]/em');
-    $this->assertEqual($text[0], 'Current revision');
+    $this->assertEqual($text[0]->getText(), 'Current revision');
 
     // Set the last revision as current.
     $this->clickLink('Set as current revision');
@@ -289,12 +275,12 @@ class DiffRevisionTest extends DiffTestBase {
       // With content moderation, the new revision will not be current.
       // @see https://www.drupal.org/node/2899719
       $text = $this->xpath('//tbody/tr[1]/td[4]/div/div/ul/li/a');
-      $this->assertEqual($text[0], 'Set as current revision');
+      $this->assertEqual($text[0]->getText(), 'Set as current revision');
     }
     else {
       // Check the last revision is set as current.
       $text = $this->xpath('//tbody/tr[1]/td[4]/em');
-      $this->assertEqual($text[0], 'Current revision');
+      $this->assertEqual($text[0]->getText(), 'Current revision');
       $this->assertNoLink(t('Set as current revision'));
     }
   }
@@ -302,9 +288,10 @@ class DiffRevisionTest extends DiffTestBase {
   /**
    * Tests pager on diff overview.
    */
-  protected function doTestOverviewPager() {
-    $config = \Drupal::configFactory()->getEditable('diff.settings');
-    $config->set('general_settings.revision_pager_limit', 10)->save();
+  public function testOverviewPager() {
+    $this->config('diff.settings')
+      ->set('general_settings.revision_pager_limit', 10)
+      ->save();
 
     $this->loginAsAdmin(['view article revisions']);
 
@@ -329,12 +316,12 @@ class DiffRevisionTest extends DiffTestBase {
     // Check that the pager exists.
     $this->assertRaw('page=1');
 
-    $this->clickLinkPartialName('Next page');
+    $this->clickLink('Next page');
     // Check the number of elements on the second page.
     $element = $this->xpath('//*[@id="edit-node-revisions-table"]/tbody/tr');
     $this->assertEqual(count($element), 2);
     $this->assertRaw('page=0');
-    $this->clickLinkPartialName('Previous page');
+    $this->clickLink('Previous page');
   }
 
   /**
@@ -342,7 +329,7 @@ class DiffRevisionTest extends DiffTestBase {
    *
    * @todo Move to DiffLocaleTest?
    */
-  protected function doTestRevisionOverviewErrorMessages() {
+  public function testRevisionOverviewErrorMessages() {
     // Enable some languages for this test.
     $language = ConfigurableLanguage::createFromLangcode('de');
     $language->save();
@@ -435,7 +422,7 @@ class DiffRevisionTest extends DiffTestBase {
   /**
    * Tests Reference to Deleted Entities.
    */
-  protected function doTestEntityReference() {
+  public function testEntityReference() {
     // Login as admin with the required permissions.
     $this->loginAsAdmin([
       'administer node fields',

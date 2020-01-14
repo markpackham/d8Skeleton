@@ -1,6 +1,8 @@
 <?php
 
-namespace Drupal\diff\Tests;
+namespace Drupal\Tests\diff\Functional;
+
+use Drupal\Tests\content_moderation\Traits\ContentModerationTestTrait;
 use Drupal\workflows\Entity\Workflow;
 
 /**
@@ -9,11 +11,12 @@ use Drupal\workflows\Entity\Workflow;
  * @group diff
  */
 class DiffRevisionContentModerationTest extends DiffRevisionTest {
+  use ContentModerationTestTrait;
 
   /**
    * {@inheritdoc}
    */
-  public static $modules = ['content_moderation'];
+  protected static $modules = ['content_moderation'];
 
   /**
    * {@inheritdoc}
@@ -22,6 +25,7 @@ class DiffRevisionContentModerationTest extends DiffRevisionTest {
     parent::setUp();
 
     // Enable moderation on articles.
+    $this->createEditorialWorkflow();
     /** @var \Drupal\workflows\WorkflowInterface $workflow */
     $workflow = Workflow::load('editorial');
     /** @var \Drupal\content_moderation\Plugin\WorkflowType\ContentModeration $plugin */
@@ -53,20 +57,10 @@ class DiffRevisionContentModerationTest extends DiffRevisionTest {
   }
 
   /**
-   * {@inheritdoc}
-   */
-  public function testAll() {
-    // Ensure revision tab still works as expected.
-    parent::testAll();
-
-    // Specifically test for content moderation functionality.
-    $this->doTestContentModeration();
-  }
-
-  /**
    * Test content moderation integration.
    */
-  protected function doTestContentModeration() {
+  public function testContentModeration() {
+    $this->loginAsAdmin();
     $title = $this->randomString();
     $node = $this->createNode([
       'type' => 'article',
@@ -95,10 +89,10 @@ class DiffRevisionContentModerationTest extends DiffRevisionTest {
 
     // Verify proper moderation states are displayed.
     $diff_rows = $this->xpath('//tbody/tr/td[1]/p');
-    $this->assertEqual('Fourth revision (Draft)', (string) $diff_rows[0]);
-    $this->assertEqual('Third revision (Published)', (string) $diff_rows[1]);
-    $this->assertEqual('Second revision (Draft)', (string) $diff_rows[2]);
-    $this->assertEqual('First revision (Draft)', (string) $diff_rows[3]);
+    $this->assertEqual('Fourth revision (Draft)', $diff_rows[0]->getText());
+    $this->assertEqual('Third revision (Published)', $diff_rows[1]->getText());
+    $this->assertEqual('Second revision (Draft)', $diff_rows[2]->getText());
+    $this->assertEqual('First revision (Draft)', $diff_rows[3]->getText());
   }
 
 }

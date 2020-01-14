@@ -1,9 +1,8 @@
 <?php
 
-namespace Drupal\diff\Tests;
+namespace Drupal\Tests\diff\Functional;
 
-use Drupal\field_ui\Tests\FieldUiTestTrait;
-use Drupal\Tests\diff\Functional\CoreVersionUiTestTrait;
+use Drupal\Tests\field_ui\Traits\FieldUiTestTrait;
 
 /**
  * Tests the Diff module entity plugins.
@@ -16,11 +15,9 @@ class DiffPluginEntityTest extends DiffPluginTestBase {
   use CoreVersionUiTestTrait;
 
   /**
-   * Modules to enable.
-   *
-   * @var array
+   * {@inheritdoc}
    */
-  public static $modules = [
+  protected static $modules = [
     'file',
     'image',
     'field_ui',

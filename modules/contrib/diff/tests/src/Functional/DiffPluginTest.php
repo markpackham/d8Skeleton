@@ -1,11 +1,10 @@
 <?php
 
-namespace Drupal\diff\Tests;
+namespace Drupal\Tests\diff\Functional;
 
 use Drupal\comment\Tests\CommentTestTrait;
 use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
-use Drupal\Tests\diff\Functional\CoreVersionUiTestTrait;
 
 /**
  * Tests the Diff module plugins.
@@ -18,11 +17,9 @@ class DiffPluginTest extends DiffPluginTestBase {
   use CoreVersionUiTestTrait;
 
   /**
-   * Modules to enable.
-   *
-   * @var array
+   * {@inheritdoc}
    */
-  public static $modules = [
+  protected static $modules = [
     'comment',
   ];
 
@@ -60,19 +57,9 @@ class DiffPluginTest extends DiffPluginTestBase {
   }
 
   /**
-   * Runs all independent tests.
-   */
-  public function testAll() {
-    $this->doTestFieldWithNoPlugin();
-    $this->doTestFieldNoAccess();
-    $this->doTestApplicablePlugin();
-    $this->doTestTrimmingField();
-  }
-
-  /**
    * Tests the changed field without plugins.
    */
-  public function doTestFieldWithNoPlugin() {
+  public function testFieldWithNoPlugin() {
     // Create an article.
     $node = $this->drupalCreateNode([
       'type' => 'article',
@@ -99,7 +86,7 @@ class DiffPluginTest extends DiffPluginTestBase {
   /**
    * Tests the access check for a field while comparing revisions.
    */
-  public function doTestFieldNoAccess() {
+  public function testFieldNoAccess() {
     // Add a text and a text field to article.
     $this->addArticleTextField('field_diff_deny_access', 'field_diff_deny_access', 'string', 'string_textfield');
 
@@ -132,7 +119,7 @@ class DiffPluginTest extends DiffPluginTestBase {
    * @covers \Drupal\diff_test\Plugin\diff\Field\TestHeavierTextPlugin
    * @covers \Drupal\diff_test\Plugin\diff\Field\TestLighterTextPlugin
    */
-  public function doTestApplicablePlugin() {
+  public function testApplicablePlugin() {
     // Add three text fields to the article.
     $this->addArticleTextField('test_field', 'Test Applicable', 'text', 'text_textfield');
     $this->addArticleTextField('test_field_lighter', 'Test Lighter Applicable', 'text', 'text_textfield');
@@ -181,7 +168,7 @@ class DiffPluginTest extends DiffPluginTestBase {
   /**
    * Tests field content trimming.
    */
-  public function doTestTrimmingField() {
+  public function testTrimmingField() {
     // Create a node.
     $node = $this->drupalCreateNode([
       'type' => 'article',
@@ -205,9 +192,9 @@ class DiffPluginTest extends DiffPluginTestBase {
     $this->drupalPostForm(NULL, [], t('Compare selected revisions'));
     $this->assertNoText('No visible changes.');
     $rows = $this->xpath('//tbody/tr');
-    $diff_row = $rows[1]->td;
+    $diff_row = $rows[1]->findAll('xpath', '/td');
     $this->assertEqual(count($rows), 3);
-    $this->assertEqual(htmlspecialchars_decode(strip_tags($diff_row[2]->asXML())), '<p>body</p>');
+    $this->assertEqual(htmlspecialchars_decode(strip_tags($diff_row[2]->getHtml())), '<p>body</p>');
 
     // Create a new revision and update the body.
     $edit = [
@@ -224,9 +211,9 @@ class DiffPluginTest extends DiffPluginTestBase {
     // Assert that empty rows also show a line number.
     $rows = $this->xpath('//tbody/tr');
     $this->assertEqual(count($rows), 5);
-    $diff_row = $rows[4]->td;
-    $this->assertEqual(htmlspecialchars_decode(strip_tags($diff_row[3]->asXML())), '4');
-    $this->assertEqual(htmlspecialchars_decode(strip_tags($diff_row[0]->asXML())), '2');
+    $diff_row = $rows[4]->findAll('xpath', '/td');
+    $this->assertEqual(htmlspecialchars_decode(strip_tags($diff_row[3]->getHtml())), '4');
+    $this->assertEqual(htmlspecialchars_decode(strip_tags($diff_row[0]->getHtml())), '2');
   }
 
 }

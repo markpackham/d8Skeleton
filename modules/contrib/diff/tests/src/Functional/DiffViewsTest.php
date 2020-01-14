@@ -1,11 +1,11 @@
 <?php
 
-namespace Drupal\diff\Tests;
+namespace Drupal\Tests\diff\Functional;
 
 use Drupal\Core\Url;
 use Drupal\node\Entity\Node;
 use Drupal\node\Entity\NodeType;
-use Drupal\views\Tests\ViewTestBase;
+use Drupal\Tests\views\Functional\ViewTestBase;
 
 /**
  * Tests the diff views integration.
@@ -19,6 +19,11 @@ class DiffViewsTest extends ViewTestBase {
   /**
    * {@inheritdoc}
    */
+  protected $defaultTheme = 'stark';
+
+  /**
+   * {@inheritdoc}
+   */
   public static $modules = ['node', 'diff', 'user', 'views', 'diff_test'];
 
   /**
@@ -26,8 +31,9 @@ class DiffViewsTest extends ViewTestBase {
    */
   public function testDiffView() {
     // Make sure HTML Diff is disabled.
-    $config = \Drupal::configFactory()->getEditable('diff.settings');
-    $config->set('general_settings.layout_plugins.visual_inline.enabled', FALSE)->save();
+    $this->config('diff.settings')
+      ->set('general_settings.layout_plugins.visual_inline.enabled', FALSE)
+      ->save();
 
     $node_type = NodeType::create([
       'type' => 'article',
@@ -55,8 +61,8 @@ class DiffViewsTest extends ViewTestBase {
     $this->drupalGet("node/{$node->id()}/diff-views");
     $this->assertResponse(200);
 
-    $from_first = (string) $this->cssSelect('#edit-diff-from--3')[0]->attributes()['value'];
-    $to_second = (string) $this->cssSelect('#edit-diff-to--2')[0]->attributes()['value'];
+    $from_first = $this->cssSelect('#edit-diff-from--3')[0]->getAttribute('value');
+    $to_second = $this->cssSelect('#edit-diff-to--2')[0]->getAttribute('value');
 
     $edit = [
       'diff_from' => $from_first,

@@ -1,24 +1,23 @@
 <?php
 
-namespace Drupal\diff\Tests;
+namespace Drupal\Tests\diff\Functional;
 
-use Drupal\simpletest\WebTestBase;
+use Drupal\Tests\BrowserTestBase;
 
 /**
  * Base class for Diff web tests.
  */
-abstract class DiffTestBase extends WebTestBase {
+abstract class DiffTestBase extends BrowserTestBase {
 
   /**
-   * Modules to enable.
-   *
-   * @var array
+   * {@inheritdoc}
    */
-  public static $modules = [
-    'node',
-    'diff',
-    'block',
-  ];
+  protected $defaultTheme = 'stark';
+
+  /**
+   * {@inheritdoc}
+   */
+  protected static $modules = ['node', 'diff', 'block'];
 
   /**
    * Permissions for the admin user.
@@ -55,8 +54,9 @@ abstract class DiffTestBase extends WebTestBase {
     $this->drupalPlaceBlock('local_actions_block');
 
     // Make sure HTML Diff is disabled.
-    $config = \Drupal::configFactory()->getEditable('diff.settings');
-    $config->set('general_settings.layout_plugins.visual_inline.enabled', FALSE)->save();
+    $this->config('diff.settings')
+      ->set('general_settings.layout_plugins.visual_inline.enabled', FALSE)
+      ->save();
   }
 
   /**

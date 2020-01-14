@@ -1,6 +1,8 @@
 <?php
 
-namespace Drupal\diff\Tests;
+namespace Drupal\Tests\diff\Functional;
+
+use Drupal\Tests\TestFileCreationTrait;
 
 /**
  * Tests the Diff module plugins.
@@ -9,16 +11,14 @@ namespace Drupal\diff\Tests;
  */
 abstract class DiffPluginTestBase extends DiffTestBase {
 
+  use TestFileCreationTrait {
+    getTestFiles as drupalGetTestFiles;
+  }
+
   /**
-   * Modules to enable.
-   *
-   * @var array
+   * {@inheritdoc}
    */
-  public static $modules = [
-    'diff_test',
-    'link',
-    'options',
-  ];
+  protected static $modules = ['diff_test', 'link', 'options'];
 
   /**
    * A storage instance for the entity form display.

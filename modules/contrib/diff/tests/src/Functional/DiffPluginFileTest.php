@@ -1,11 +1,10 @@
 <?php
 
-namespace Drupal\diff\Tests;
+namespace Drupal\Tests\diff\Functional;
 
 use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
-use Drupal\field_ui\Tests\FieldUiTestTrait;
-use Drupal\Tests\diff\Functional\CoreVersionUiTestTrait;
+use Drupal\Tests\field_ui\Traits\FieldUiTestTrait;
 
 /**
  * Tests the Diff module entity plugins.
@@ -18,11 +17,9 @@ class DiffPluginFileTest extends DiffPluginTestBase {
   use CoreVersionUiTestTrait;
 
   /**
-   * Modules to enable.
-   *
-   * @var array
+   * {@inheritdoc}
    */
-  public static $modules = [
+  protected static $modules = [
     'file',
     'image',
     'field_ui',
@@ -113,14 +110,14 @@ class DiffPluginFileTest extends DiffPluginTestBase {
     ];
     $this->drupalPostForm(NULL, $edit, t('Compare selected revisions'));
     $this->assertText('File');
-    $this->assertText('File: text-1.txt');
+    $this->assertText('File: text-1_0.txt');
     $this->assertText('File ID: 4');
 
     // Use the unified fields layout.
     $this->clickLink('Unified fields');
     $this->assertResponse(200);
     $this->assertText('File');
-    $this->assertText('File: text-1.txt');
+    $this->assertText('File: text-1_0.txt');
     $this->assertText('File ID: 4');
   }
 
@@ -204,7 +201,7 @@ class DiffPluginFileTest extends DiffPluginTestBase {
     ];
     $this->drupalPostForm(NULL, $edit, t('Compare selected revisions'));
     $this->assertText('Image');
-    $this->assertText('Image: image-test-transparent-indexed.gif');
+    $this->assertText('Image: image-test-transparent-indexed_0.gif');
     // Image title must be absent since it is not set in previous revisions.
     $this->assertNoText('Title');
 
@@ -221,20 +218,22 @@ class DiffPluginFileTest extends DiffPluginTestBase {
     ];
     $this->drupalPostNodeForm('node/' . $node->id() . '/edit', $edit, t('Save and keep published'));
     $this->drupalPostForm('node/' . $node->id() . '/revisions', [], t('Compare selected revisions'));
-    $rows = $this->xpath('//tbody/tr');
+
+
     // Image title and alternative text must be shown.
-    $this->assertEqual(htmlspecialchars_decode(strip_tags($rows[2]->td[2]->asXML())), 'Alt: Image alt updated');
-    $this->assertEqual(htmlspecialchars_decode(strip_tags($rows[2]->td[5]->asXML())), 'Alt: Image alt updated new');
-    $this->assertEqual(htmlspecialchars_decode(strip_tags($rows[3]->td[2]->asXML())), '');
-    $this->assertEqual(htmlspecialchars_decode(strip_tags($rows[3]->td[5]->asXML())), 'Title: Image title updated');
+    $assert_session = $this->assertSession();
+    $assert_session->elementContains('css', 'tr:nth-child(3) td:nth-child(3)', 'Alt: Image alt updated');
+    $assert_session->elementTextContains('css', 'tr:nth-child(3) td:nth-child(6)', 'Alt: Image alt updated new');
+    $this->assertEquals('', $assert_session->elementExists('css', 'tr:nth-child(4) td:nth-child(3)')->getText());
+    $assert_session->elementTextContains('css', 'tr:nth-child(4) td:nth-child(6)', 'Title: Image title updated');
 
     // Show File ID.
     $this->drupalGet('admin/config/content/diff/fields');
-    $this->drupalPostAjaxForm(NULL, [], 'node.field_image_settings_edit');
+    $this->drupalPostForm(NULL, [], 'node__field_image_settings_edit');
     $edit = [
-      'fields[node.field_image][settings_edit_form][settings][show_id]' => TRUE,
+      'fields[node__field_image][settings_edit_form][settings][show_id]' => TRUE,
     ];
-    $this->drupalPostAjaxForm(NULL, $edit, 'node.field_image_plugin_settings_update');
+    $this->drupalPostForm(NULL, $edit, 'node__field_image_plugin_settings_update');
     $this->drupalPostForm(NULL, [], t('Save'));
     $this->drupalPostForm('node/' . $node->id() . '/revisions', [], t('Compare selected revisions'));
     // Alt and title must be hidden.
@@ -242,11 +241,11 @@ class DiffPluginFileTest extends DiffPluginTestBase {
 
     // Disable alt image fields.
     $this->drupalGet('admin/config/content/diff/fields');
-    $this->drupalPostAjaxForm(NULL, [], 'node.field_image_settings_edit');
+    $this->drupalPostForm(NULL, [], 'node__field_image_settings_edit');
     $edit = [
-      'fields[node.field_image][settings_edit_form][settings][compare_alt_field]' => FALSE,
+      'fields[node__field_image][settings_edit_form][settings][compare_alt_field]' => FALSE,
     ];
-    $this->drupalPostAjaxForm(NULL, $edit, 'node.field_image_plugin_settings_update');
+    $this->drupalPostForm(NULL, $edit, 'node__field_image_plugin_settings_update');
     $this->drupalPostForm(NULL, [], t('Save'));
     $this->drupalPostForm('node/' . $node->id() . '/revisions', [], t('Compare selected revisions'));
     // Alt and title must be hidden.
@@ -256,12 +255,12 @@ class DiffPluginFileTest extends DiffPluginTestBase {
 
     // Disable title image fields, reenable alt.
     $this->drupalGet('admin/config/content/diff/fields');
-    $this->drupalPostAjaxForm(NULL, [], 'node.field_image_settings_edit');
+    $this->drupalPostForm(NULL, [], 'node__field_image_settings_edit');
     $edit = [
-      'fields[node.field_image][settings_edit_form][settings][compare_alt_field]' => TRUE,
-      'fields[node.field_image][settings_edit_form][settings][compare_title_field]' => FALSE,
+      'fields[node__field_image][settings_edit_form][settings][compare_alt_field]' => TRUE,
+      'fields[node__field_image][settings_edit_form][settings][compare_title_field]' => FALSE,
     ];
-    $this->drupalPostAjaxForm(NULL, $edit, 'node.field_image_plugin_settings_update');
+    $this->drupalPostForm(NULL, $edit, 'node__field_image_plugin_settings_update');
     $this->drupalPostForm(NULL, [], t('Save'));
     $this->drupalPostForm('node/' . $node->id() . '/revisions', [], t('Compare selected revisions'));
     $this->assertText('Alt: Image alt updated');
@@ -273,11 +272,11 @@ class DiffPluginFileTest extends DiffPluginTestBase {
     $this->assertRaw($image_url);
 
     // Disable thumbnail image field.
-    $this->drupalPostAjaxForm('admin/config/content/diff/fields', [], 'node.field_image_settings_edit');
+    $this->drupalPostForm('admin/config/content/diff/fields', [], 'node__field_image_settings_edit');
     $edit = [
-      'fields[node.field_image][settings_edit_form][settings][show_thumbnail]' => FALSE,
+      'fields[node__field_image][settings_edit_form][settings][show_thumbnail]' => FALSE,
     ];
-    $this->drupalPostAjaxForm(NULL, $edit, 'node.field_image_plugin_settings_update');
+    $this->drupalPostForm(NULL, $edit, 'node__field_image_plugin_settings_update');
     $this->drupalPostForm(NULL, [], t('Save'));
     $this->drupalPostForm('node/' . $node->id() . '/revisions', [], t('Compare selected revisions'));
 

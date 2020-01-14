@@ -1,7 +1,6 @@
 <?php
 
-namespace Drupal\diff\Tests;
-use Drupal\Tests\diff\Functional\CoreVersionUiTestTrait;
+namespace Drupal\Tests\diff\Functional;
 
 /**
  * Tests the Diff admin forms.
@@ -13,11 +12,9 @@ class DiffAdminFormsTest extends DiffTestBase {
   use CoreVersionUiTestTrait;
 
   /**
-   * Modules to enable.
-   *
-   * @var array
+   * {@inheritdoc}
    */
-  public static $modules = [
+  protected static $modules = [
     'field_ui',
     'help',
   ];
@@ -32,20 +29,9 @@ class DiffAdminFormsTest extends DiffTestBase {
   }
 
   /**
-   * Run all independent tests.
-   */
-  public function testAll() {
-    $this->doTestSettingsUi();
-    $this->doTestSettingsTab();
-    $this->doTestRequirements();
-    $this->doTestConfigurableFieldsTab();
-    $this->doTestPluginWeight();
-  }
-
-  /**
    * Tests the descriptions in the Settings UI.
    */
-  public function doTestSettingsUi() {
+  public function testSettingsUi() {
     // Enable the help block.
     $this->drupalPlaceBlock('help_block', ['region' => 'help']);
 
@@ -60,7 +46,7 @@ class DiffAdminFormsTest extends DiffTestBase {
   /**
    * Tests the Settings tab.
    */
-  public function doTestSettingsTab() {
+  public function testSettingsTab() {
     $edit = [
       'radio_behavior' => 'linear',
       'context_lines_leading' => 10,
@@ -73,7 +59,7 @@ class DiffAdminFormsTest extends DiffTestBase {
   /**
    * Tests the module requirements.
    */
-  public function doTestRequirements() {
+  public function testRequirements() {
     module_load_install('diff');
     $requirements = diff_requirements('runtime');
     $this->assertEqual($requirements['html_diff_advanced']['title'], 'Diff');
@@ -92,68 +78,68 @@ class DiffAdminFormsTest extends DiffTestBase {
   /**
    * Tests the Configurable Fields tab.
    */
-  public function doTestConfigurableFieldsTab() {
+  public function testConfigurableFieldsTab() {
     $this->drupalGet('admin/config/content/diff/fields');
 
     // Test changing type without changing settings.
     $edit = [
-      'fields[node.body][plugin][type]' => 'text_summary_field_diff_builder',
+      'fields[node__body][plugin][type]' => 'text_summary_field_diff_builder',
     ];
     $this->drupalPostForm(NULL, $edit, t('Save'));
-    $this->assertFieldByName('fields[node.body][plugin][type]', 'text_summary_field_diff_builder');
+    $this->assertFieldByName('fields[node__body][plugin][type]', 'text_summary_field_diff_builder');
     $edit = [
-      'fields[node.body][plugin][type]' => 'text_field_diff_builder',
+      'fields[node__body][plugin][type]' => 'text_field_diff_builder',
     ];
     $this->drupalPostForm(NULL, $edit, t('Save'));
-    $this->assertFieldByName('fields[node.body][plugin][type]', 'text_field_diff_builder');
+    $this->assertFieldByName('fields[node__body][plugin][type]', 'text_field_diff_builder');
 
-    $this->drupalPostAjaxForm(NULL, [], 'node.body_settings_edit');
+    $this->drupalPostForm(NULL, [], 'node__body_settings_edit');
     $this->assertText('Plugin settings: Text');
     $edit = [
-      'fields[node.body][settings_edit_form][settings][show_header]' => TRUE,
-      'fields[node.body][settings_edit_form][settings][compare_format]' => FALSE,
-      'fields[node.body][settings_edit_form][settings][markdown]' => 'filter_xss_all',
+      'fields[node__body][settings_edit_form][settings][show_header]' => TRUE,
+      'fields[node__body][settings_edit_form][settings][compare_format]' => FALSE,
+      'fields[node__body][settings_edit_form][settings][markdown]' => 'filter_xss_all',
     ];
-    $this->drupalPostAjaxForm(NULL, $edit, 'node.body_plugin_settings_update');
+    $this->drupalPostForm(NULL, $edit, 'node__body_plugin_settings_update');
     $this->drupalPostForm(NULL, [], t('Save'));
     $this->assertText('Your settings have been saved.');
 
     // Check the values were saved.
-    $this->drupalPostAjaxForm(NULL, [], 'node.body_settings_edit');
-    $this->assertFieldByName('fields[node.body][settings_edit_form][settings][markdown]', 'filter_xss_all');
+    $this->drupalPostForm(NULL, [], 'node__body_settings_edit');
+    $this->assertFieldByName('fields[node__body][settings_edit_form][settings][markdown]', 'filter_xss_all');
 
     // Edit another field.
-    $this->drupalPostAjaxForm(NULL, [], 'node.title_settings_edit');
+    $this->drupalPostForm(NULL, [], 'node__title_settings_edit');
     $edit = [
-      'fields[node.title][settings_edit_form][settings][markdown]' => 'filter_xss_all',
+      'fields[node__title][settings_edit_form][settings][markdown]' => 'filter_xss_all',
     ];
-    $this->drupalPostAjaxForm(NULL, $edit, 'node.title_plugin_settings_update');
+    $this->drupalPostForm(NULL, $edit, 'node__title_plugin_settings_update');
     $this->drupalPostForm(NULL, [], t('Save'));
 
     // Check both fields and their config values.
-    $this->drupalPostAjaxForm(NULL, [], 'node.body_settings_edit');
-    $this->assertFieldByName('fields[node.body][settings_edit_form][settings][markdown]', 'filter_xss_all');
-    $this->drupalPostAjaxForm(NULL, [], 'node.title_settings_edit');
-    $this->assertFieldByName('fields[node.title][settings_edit_form][settings][markdown]', 'filter_xss_all');
+    $this->drupalPostForm(NULL, [], 'node__body_settings_edit');
+    $this->assertFieldByName('fields[node__body][settings_edit_form][settings][markdown]', 'filter_xss_all');
+    $this->drupalPostForm(NULL, [], 'node__title_settings_edit');
+    $this->assertFieldByName('fields[node__title][settings_edit_form][settings][markdown]', 'filter_xss_all');
 
     // Save field settings without changing anything and assert the config.
     $this->drupalPostForm(NULL, [], t('Save'));
-    $this->drupalPostAjaxForm(NULL, [], 'node.body_settings_edit');
-    $this->assertFieldByName('fields[node.body][settings_edit_form][settings][markdown]', 'filter_xss_all');
-    $this->drupalPostAjaxForm(NULL, [], 'node.title_settings_edit');
-    $this->assertFieldByName('fields[node.title][settings_edit_form][settings][markdown]', 'filter_xss_all');
+    $this->drupalPostForm(NULL, [], 'node__body_settings_edit');
+    $this->assertFieldByName('fields[node__body][settings_edit_form][settings][markdown]', 'filter_xss_all');
+    $this->drupalPostForm(NULL, [], 'node__title_settings_edit');
+    $this->assertFieldByName('fields[node__title][settings_edit_form][settings][markdown]', 'filter_xss_all');
 
     $edit = [
-      'fields[node.sticky][plugin][type]' => 'hidden',
+      'fields[node__sticky][plugin][type]' => 'hidden',
     ];
     $this->drupalPostForm(NULL, $edit, t('Save'));
-    $this->assertFieldByName('fields[node.sticky][plugin][type]', 'hidden');
+    $this->assertFieldByName('fields[node__sticky][plugin][type]', 'hidden');
   }
 
   /**
    * Tests the Compare Revisions vertical tab.
    */
-  public function doTestPluginWeight() {
+  public function testPluginWeight() {
     // Create a node with a revision.
     $edit = [
       'title[0][value]' => 'great_title',
@@ -176,7 +162,7 @@ class DiffAdminFormsTest extends DiffTestBase {
     $this->assertLink('Raw');
     $this->assertLink('Strip tags');
     $text = $this->xpath('//tbody/tr[4]/td[3]');
-    $this->assertEqual(htmlspecialchars_decode(strip_tags($text[0]->asXML())), '<p>great_body</p>');
+    $this->assertEqual(htmlspecialchars_decode(strip_tags($text[0]->getHtml())), '<p>great_body</p>');
 
     // Change the settings of the layouts, disable the single column.
     $edit = [
@@ -195,8 +181,8 @@ class DiffAdminFormsTest extends DiffTestBase {
     $this->assertLink('Raw');
     $this->assertLink('Strip tags');
     $this->clickLink('Strip tags');
-    $text = $this->xpath('//tbody/tr[4]/td[2]');
-    $this->assertEqual(htmlspecialchars_decode(strip_tags($text[0]->asXML())), 'great_body');
+    $assert_session = $this->assertSession();
+    $assert_session->elementContains('css', 'tr:nth-child(4) td:nth-child(2)', 'great_body');
 
     // Change the settings of the layouts, enable single column.
     $edit = [
@@ -221,11 +207,10 @@ class DiffAdminFormsTest extends DiffTestBase {
     $this->assertNoLink('Split fields');
     $this->assertLink('Raw');
     $this->assertLink('Strip tags');
-    $text = $this->xpath('//tbody/tr[5]/td[4]');
-    $this->assertEqual(htmlspecialchars_decode(strip_tags($text[0]->asXML())), '<p>great_body</p>');
+    $assert_session->elementTextContains('css', 'tr:nth-child(5) td:nth-child(4)', '<p>great_body</p>');
     $this->clickLink('Strip tags');
-    $text = $this->xpath('//tbody/tr[5]/td[2]');
-    $this->assertEqual(htmlspecialchars_decode(strip_tags($text[0]->asXML())), 'great_body');
+    $assert_session->elementContains('css', 'tr:nth-child(5) td:nth-child(2)', 'great_body');
+    $assert_session->elementTextNotContains('css', 'tr:nth-child(5) td:nth-child(2)', '<p>');
   }
 
 }

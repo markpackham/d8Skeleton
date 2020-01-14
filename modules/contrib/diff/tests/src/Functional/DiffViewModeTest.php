@@ -1,7 +1,6 @@
 <?php
 
-namespace Drupal\diff\Tests;
-use Drupal\Tests\diff\Functional\CoreVersionUiTestTrait;
+namespace Drupal\Tests\diff\Functional;
 
 /**
  * Tests field visibility when using a custom view mode.
@@ -13,11 +12,9 @@ class DiffViewModeTest extends DiffTestBase {
   use CoreVersionUiTestTrait;
 
   /**
-   * Modules to enable.
-   *
-   * @var array
+   * {@inheritdoc}
    */
-  public static $modules = ['field_ui'];
+  protected static $modules = ['field_ui'];
 
   /**
    * Tests field visibility using a cutom view mode.
