@@ -4,7 +4,7 @@
       var exist = $('#backtotop').length;
       if (exist == 0) {
         $("body", context).once('backtotop').each(function () {
-          $('body').append("<div id='backtotop'>" + Drupal.t(settings.back_to_top.back_to_top_button_text) + "</div>");
+          $('body').append("<button id='backtotop'>" + settings.back_to_top.back_to_top_button_text + "</button>");
         });
       }
 
