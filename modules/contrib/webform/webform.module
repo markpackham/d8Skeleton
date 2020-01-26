@@ -137,7 +137,29 @@ function webform_config_schema_info_alter(&$definitions) {
   ];
 
   // Append settings handler settings schema.
-  $definitions['webform.handler.settings']['mapping'] += $mapping['settings']['mapping'];
+  $definitions['webform.handler.settings']['mapping'] += _webform_config_schema_info_alter_settings_recursive($mapping['settings']['mapping']);
+}
+
+/**
+ * Convert most data types to 'string' to support tokens.
+ *
+ * @param array $settings
+ *   An associative array of schema settings.
+ *
+ * @return array
+ *   An associative array of schema settings with most data types to 'string'
+ *   to support tokens
+ */
+function _webform_config_schema_info_alter_settings_recursive(array $settings) {
+  foreach ($settings as $name => $setting) {
+    if (is_array($setting)) {
+      $settings[$name] = _webform_config_schema_info_alter_settings_recursive($setting);
+    }
+    elseif ($name === 'type' && in_array($setting, ['boolean', 'integer', 'float', 'uri', 'email'])) {
+      $settings[$name] = 'string';
+    }
+  }
+  return $settings;
 }
 
 /**
