@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\extlink\Tests;
+namespace Drupal\Tests\extlink\FunctionalJavascript;
 
 /**
  * Testing of the External Links administration interface and functionality.
@@ -15,11 +15,11 @@ class ExtlinkAdminTest extends ExtlinkTestBase {
   public function testAdminAccess() {
     $this->drupalLogin($this->normalUser);
     $this->drupalGet(self::EXTLINK_ADMIN_PATH);
-    $this->assertText(t('Access denied'), 'Normal users should not be able to access the External Links admin pages', 'External Links');
+    $this->assertSession()->pageTextContains(t('Access denied'), 'Normal users should not be able to access the External Links admin pages', 'External Links');
 
     $this->drupalLogin($this->adminUser);
     $this->drupalGet(self::EXTLINK_ADMIN_PATH);
-    $this->assertNoText(t('Access denied'), 'Admin users should be able to access the External Links admin pages', 'External Links');
+    $this->assertSession()->pageTextNotContains(t('Access denied'), 'Admin users should be able to access the External Links admin pages', 'External Links');
   }
 
 }
